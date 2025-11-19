@@ -38,30 +38,34 @@ Sinkhole UI is a web-based user interface designed to provide an intuitive and e
 ### Prerequisites
 
 Before you begin, ensure you have the following installed:
+
 - **Node.js** (version 18 or higher)
 - **pnpm** (recommended) or npm/yarn
 
 ### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/CPE-TungTungSahur/Sinkhole-UI.git
-   cd Sinkhole-UI
-   ```
+
+    ```bash
+    git clone https://github.com/CPE-TungTungSahur/Sinkhole-UI.git
+    cd Sinkhole-UI
+    ```
 
 2. **Install dependencies**
-   ```bash
-   pnpm install
-   ```
+
+    ```bash
+    pnpm install
+    ```
 
 3. **Run the development server**
-   ```bash
-   pnpm dev
-   ```
+
+    ```bash
+    pnpm dev
+    ```
 
 4. **Open your browser**
-   
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the application running.
+
+    Navigate to [http://localhost:3000](http://localhost:3000) to see the application running.
 
 ### Building for Production
 
@@ -107,6 +111,7 @@ sinkhole-ui/
 ### Code Style
 
 This project uses TypeScript for type safety. Please ensure your code:
+
 - Follows TypeScript best practices
 - Is properly typed (avoid using `any` when possible)
 - Follows the existing code structure and naming conventions
@@ -129,6 +134,7 @@ We welcome contributions from the community! Here's how you can help:
 5. **Open a Pull Request**
 
 Please make sure to:
+
 - Write clear commit messages
 - Update documentation as needed
 - Test your changes before submitting
