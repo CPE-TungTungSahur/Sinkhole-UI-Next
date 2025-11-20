@@ -18,5 +18,9 @@
     },
     "[css]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "yaml.schemas": {
+        "": "docker-compose.yml"
     }
+    // "yaml.validate": false
 }
