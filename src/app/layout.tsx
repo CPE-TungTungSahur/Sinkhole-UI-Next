@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "SinkHole",
+    title: "Sinkhole Prediction",
     description: "Engineer Exploration",
 };
 

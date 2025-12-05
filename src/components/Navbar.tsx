@@ -18,7 +18,10 @@ export default function Navbar(): React.JSX.Element {
             <div className="border-border bg-card/80 fixed left-0 top-0 z-50 w-full bg-[#0000]/50 shadow-lg backdrop-blur-lg">
                 <div className="container mx-auto w-full">
                     <div className="flex flex-row items-center justify-between px-10 py-4">
-                        <div className="text-2xl font-bold text-white" onClick={() => handleNavigateHome()}>
+                        <div
+                            className="cursor-pointer text-2xl font-bold text-white"
+                            onClick={() => handleNavigateHome()}
+                        >
                             Sinkhole <span className="text-cyan-400">Prediction</span>
                         </div>
                         {/* <Link
