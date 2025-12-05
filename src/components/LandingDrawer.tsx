@@ -1,19 +1,25 @@
 "use client";
 
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronUp } from "lucide-react";
-import { useState } from "react";
 
-export default function HomePage() {
+export default function LandingDrawer(): React.JSX.Element {
+    const [isHidden, setIsHidden] = useState(false);
     const [isSliding, setIsSliding] = useState(false);
     const router = useRouter();
 
     const handleSlideUp = () => {
         setIsSliding(true);
         setTimeout(() => {
+            setIsHidden(true);
             router.push("/map");
         }, 700);
     };
+
+    if (isHidden) {
+        return null;
+    }
 
     return (
         <div
