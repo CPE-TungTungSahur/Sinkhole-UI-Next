@@ -3,7 +3,7 @@
 import Image from "next/image";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
 
 const sinkholePredictions = [
@@ -95,6 +95,79 @@ export default function MapPage() {
                 labelLayerId
             );
 
+            // Helper function to create circle GeoJSON
+            const createCircle = (center: [number, number], radiusInKm: number, points = 64) => {
+                const coords = {
+                    latitude: center[1],
+                    longitude: center[0],
+                };
+
+                const km = radiusInKm;
+                const ret = [];
+                const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180));
+                const distanceY = km / 110.574;
+
+                for (let i = 0; i < points; i++) {
+                    const theta = (i / points) * (2 * Math.PI);
+                    const x = distanceX * Math.cos(theta);
+                    const y = distanceY * Math.sin(theta);
+                    ret.push([coords.longitude + x, coords.latitude + y]);
+                }
+                ret.push(ret[0]);
+
+                return {
+                    type: "Feature" as const,
+                    geometry: {
+                        type: "Polygon" as const,
+                        coordinates: [ret],
+                    },
+                };
+            };
+
+            // Add circle areas for each prediction
+            sinkholePredictions.forEach((prediction, index) => {
+                const circle = createCircle(prediction.coordinates as [number, number], 0.2);
+
+                // Add source for this circle
+                map.current!.addSource(`circle-${prediction.id}`, {
+                    type: "geojson",
+                    data: circle as any,
+                });
+
+                // Add fill layer
+                map.current!.addLayer({
+                    id: `circle-fill-${prediction.id}`,
+                    type: "fill",
+                    source: `circle-${prediction.id}`,
+                    paint: {
+                        "fill-color":
+                            prediction.risk === "high"
+                                ? "#ef4444"
+                                : prediction.risk === "medium"
+                                  ? "#f97316"
+                                  : "#06b6d4",
+                        "fill-opacity": 0.2,
+                    },
+                });
+
+                // Add border layer
+                map.current!.addLayer({
+                    id: `circle-border-${prediction.id}`,
+                    type: "line",
+                    source: `circle-${prediction.id}`,
+                    paint: {
+                        "line-color":
+                            prediction.risk === "high"
+                                ? "#ef4444"
+                                : prediction.risk === "medium"
+                                  ? "#f97316"
+                                  : "#06b6d4",
+                        "line-width": 2,
+                        "line-opacity": 0.8,
+                    },
+                });
+            });
+
             // Add markers for each predicted sinkhole location
             sinkholePredictions.forEach((prediction) => {
                 const el = document.createElement("div");
@@ -145,7 +218,10 @@ export default function MapPage() {
         });
 
         return () => {
-            map.current?.remove();
+            if (map.current) {
+                map.current.remove();
+                map.current = null;
+            }
         };
     }, []);
     return (
