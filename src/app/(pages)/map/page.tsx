@@ -5,39 +5,38 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
+import axios, { AxiosResponse } from "axios";
 
-const sinkholePredictions = [
-    { id: 1, coordinates: [100.5018, 13.7563], risk: "high", location: "Orlando, FL" },
-    { id: 2, coordinates: [-82.458, 27.947], risk: "medium", location: "Tampa, FL" },
-    { id: 3, coordinates: [-80.191, 25.761], risk: "high", location: "Miami, FL" },
-    { id: 4, coordinates: [-81.655, 30.332], risk: "low", location: "Jacksonville, FL" },
-    { id: 5, coordinates: [-84.988, 29.722], risk: "medium", location: "Tallahassee, FL" },
-];
-
-async function fetchSinkholePredictions() {
-    try {
-        const res = await fetch("/api/dev/getdata");
-
-        if (!res.ok) {
-            throw new Error("Backend API error");
-        }
-
-        return await res.json();
-    } catch (err) {
-        console.error("Error fetching sinkhole predictions:", err);
-        return null;
-    }
+export interface IPredictedPoint {
+    lat: number;
+    lon: number;
+    risk: number;
+    line: string;
+    color: string;
+    point_type: string;
+}
+export interface IAPIPredictedPoint {
+    date: string;
+    data: {
+        lat: number;
+        lon: number;
+        risk: number;
+        line: string;
+        color: string;
+        point_type: string;
+    }[];
 }
 
 function getRiskColor(prob: number) {
-    if (prob > 0.3) return "hsl(0 84% 60%)"; // High risk but should be greater than 0.716
-    if (prob > 0.2) return "hsl(25 95% 53%)"; // Medium risk but should be between 0.5 and 0.716
-    return "hsl(189 94% 43%)"; // low
+    if (prob > 0.3) return "hsl(0, 84%, 60%)"; // High risk but should be greater than 0.716
+    if (prob > 0.2) return "hsl(25, 95%, 53%)"; // Medium risk but should be between 0.5 and 0.716
+    return "hsl(189, 94%, 43%)"; // low
 }
 
 export default function MapPage() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
+    const [predictedPoints, setPredictedPoints] = useState<IPredictedPoint[]>([]);
 
     useEffect(() => {
         if (!mapContainer.current || map.current) return;
@@ -58,66 +57,55 @@ export default function MapPage() {
         map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "right");
 
         map.current.on("load", async () => {
-            const result = await fetchSinkholePredictions();
-            console.log("Fetched predictions:", result);
-
             // Add 3D terrain
-            map.current!.addSource("mapbox-dem", {
-                type: "raster-dem",
-                url: "mapbox://mapbox.mapbox-terrain-dem-v1",
-                tileSize: 512,
-                maxzoom: 14,
-            });
+            // map.current!.addSource("mapbox-dem", {
+            //     type: "raster-dem",
+            //     url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+            //     tileSize: 512,
+            //     maxzoom: 14,
+            // });
 
-            map.current!.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
+            // map.current!.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
 
             // Add sky layer for atmosphere
-            map.current!.addLayer({
-                id: "sky",
-                type: "sky",
-                paint: {
-                    "sky-type": "atmosphere",
-                    "sky-atmosphere-sun": [0.0, 0.0],
-                    "sky-atmosphere-sun-intensity": 15,
-                },
-            });
+            // map.current!.addLayer({
+            //     id: "sky",
+            //     type: "sky",
+            //     paint: {
+            //         "sky-type": "atmosphere",
+            //         "sky-atmosphere-sun": [0.0, 0.0],
+            //         "sky-atmosphere-sun-intensity": 15,
+            //     },
+            // });
 
             // Add 3D buildings layer - first add the source
-            if (!map.current!.getSource("openmaptiles")) {
-                map.current!.addSource("openmaptiles", {
-                    type: "vector",
-                    url: "https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
-                });
-            }
+            // if (!map.current!.getSource("openmaptiles")) {
+            //     map.current!.addSource("openmaptiles", {
+            //         type: "vector",
+            //         url: "https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
+            //     });
+            // }
 
-            const layers = map.current!.getStyle().layers;
-            const labelLayerId = layers?.find((layer) => layer.type === "symbol" && layer.layout?.["text-field"])?.id;
+            // const layers = map.current!.getStyle().layers;
+            // const labelLayerId = layers?.find((layer) => layer.type === "symbol" && layer.layout?.["text-field"])?.id;
 
-            map.current!.addLayer(
-                {
-                    id: "add-3d-buildings",
-                    source: "openmaptiles",
-                    "source-layer": "building",
-                    filter: ["==", "extrude", "true"],
-                    type: "fill-extrusion",
-                    minzoom: 15,
-                    paint: {
-                        "fill-extrusion-color": "#4a5568",
-                        "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 15, 0, 15.05, ["get", "height"]],
-                        "fill-extrusion-base": [
-                            "interpolate",
-                            ["linear"],
-                            ["zoom"],
-                            15,
-                            0,
-                            15.05,
-                            ["get", "min_height"],
-                        ],
-                        "fill-extrusion-opacity": 0.8,
-                    },
-                },
-                labelLayerId
-            );
+            // map.current!.addLayer(
+            //     {
+            //         id: "add-3d-buildings",
+            //         source: "openmaptiles",
+            //         "source-layer": "building",
+            //         filter: ["==", "extrude", "true"],
+            //         type: "fill-extrusion",
+            //         minzoom: 15,
+            //         paint: {
+            //             "fill-extrusion-color": "#4a5568",
+            //             "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 15, 0, 15.05, ["get", "height"]],
+            //             "fill-extrusion-base": ["interpolate", ["linear"], ["zoom"], 15, 0, 15.05, ["get", "min_height"]],
+            //             "fill-extrusion-opacity": 0.8,
+            //         },
+            //     },
+            //     labelLayerId
+            // );
 
             // Helper function to create circle GeoJSON
             const createCircle = (center: [number, number], radiusInKm: number, points = 64) => {
@@ -149,43 +137,33 @@ export default function MapPage() {
             };
 
             // Add circle areas for each prediction
-            sinkholePredictions.forEach((prediction, index) => {
-                const circle = createCircle(prediction.coordinates as [number, number], 0.2);
+            predictedPoints.forEach((point, index) => {
+                const circle = createCircle([point.lon, point.lat], 0.2);
 
                 // Add source for this circle
-                map.current!.addSource(`circle-${prediction.id}`, {
+                map.current!.addSource(`circle-${point.line}-${index}`, {
                     type: "geojson",
                     data: circle as any,
                 });
 
                 // Add fill layer
                 map.current!.addLayer({
-                    id: `circle-fill-${prediction.id}`,
+                    id: `circle-fill-${point.line}-${index}`,
                     type: "fill",
-                    source: `circle-${prediction.id}`,
+                    source: `circle-${point.line}-${index}`,
                     paint: {
-                        "fill-color":
-                            prediction.risk === "high"
-                                ? "#ef4444"
-                                : prediction.risk === "medium"
-                                  ? "#f97316"
-                                  : "#06b6d4",
+                        "fill-color": getRiskColor(point.risk),
                         "fill-opacity": 0.2,
                     },
                 });
 
                 // Add border layer
                 map.current!.addLayer({
-                    id: `circle-border-${prediction.id}`,
+                    id: `circle-border-${point.line}-${index}`,
                     type: "line",
-                    source: `circle-${prediction.id}`,
+                    source: `circle-${point.line}-${index}`,
                     paint: {
-                        "line-color":
-                            prediction.risk === "high"
-                                ? "#ef4444"
-                                : prediction.risk === "medium"
-                                  ? "#f97316"
-                                  : "#06b6d4",
+                        "line-color": getRiskColor(point.risk),
                         "line-width": 2,
                         "line-opacity": 0.8,
                     },
@@ -193,8 +171,8 @@ export default function MapPage() {
             });
 
             // Add markers for each predicted sinkhole location
-            sinkholePredictions.forEach((prediction) => {
-                if (prediction.risk == "low") return; // Should be less than 0.5 but this is for testing na
+            predictedPoints.forEach((point) => {
+                // if (point.risk < 2) return; // Should be less than 0.5 but this is for testing na
                 const el = document.createElement("div");
                 el.className = "sinkhole-marker";
                 el.style.width = "24px";
@@ -203,12 +181,12 @@ export default function MapPage() {
                 el.style.cursor = "pointer";
                 el.style.border = "3px solid";
 
-                if (prediction.risk == "high") {
+                if (point.risk > 1) {
                     // Should be greater than 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(0 84% 60%)";
                     el.style.borderColor = "hsl(0 84% 70%)";
                     el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
-                } else if (prediction.risk == "medium") {
+                } else if (point.risk > 2) {
                     // Should be between 0.5 and 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(25 95% 53%)";
                     el.style.borderColor = "hsl(25 95% 63%)";
@@ -217,21 +195,18 @@ export default function MapPage() {
 
                 const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
                     <div style="padding: 8px; background: hsl(222 47% 11%); color: hsl(210 40% 98%);">
-                        <p><b>Location:</b> ${prediction.location}</p>
-                        <p><b>Risk Level:</b> <span style="color: ${prediction.risk === "high" ? "#ef4444" : "#f97316"}; font-weight: bold;">
-                            ${prediction.risk.charAt(0).toUpperCase() + prediction.risk.slice(1)}
+                        <p><b>Location:</b> ${point.line}</p>
+                        <p><b>Risk Level:</b> <span style="color: ${getRiskColor(point.risk)}; font-weight: bold;">
+                            ${point.risk}
                         </span></p>
                     </div>
                 `);
 
-                const marker = new mapboxgl.Marker(el)
-                    .setLngLat(prediction.coordinates as [number, number])
-                    .setPopup(popup)
-                    .addTo(map.current!);
+                const marker = new mapboxgl.Marker(el).setLngLat([point.lon, point.lat]).setPopup(popup).addTo(map.current!);
 
                 el.addEventListener("click", (e) => {
                     e.stopPropagation();
-                    console.log("Marker clicked:", prediction.location);
+                    console.log("Marker clicked:", point.line);
                 });
             });
         });
@@ -242,7 +217,22 @@ export default function MapPage() {
                 map.current = null;
             }
         };
+    }, [predictedPoints]);
+
+    useEffect(() => {
+        (async () => {
+            const getPredictedPoint: AxiosResponse<IAPIPredictedPoint> = await axios.post(
+                "/api/dev/predicted-point",
+                {},
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+            console.log(getPredictedPoint.data.data);
+            setPredictedPoints(getPredictedPoint.data.data);
+        })();
     }, []);
+
     return (
         <>
             <div className="relative w-full">
