@@ -57,56 +57,6 @@ export default function MapPage() {
         map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "right");
 
         map.current.on("load", async () => {
-            // Add 3D terrain
-            // map.current!.addSource("mapbox-dem", {
-            //     type: "raster-dem",
-            //     url: "mapbox://mapbox.mapbox-terrain-dem-v1",
-            //     tileSize: 512,
-            //     maxzoom: 14,
-            // });
-
-            // map.current!.setTerrain({ source: "mapbox-dem", exaggeration: 1.5 });
-
-            // Add sky layer for atmosphere
-            // map.current!.addLayer({
-            //     id: "sky",
-            //     type: "sky",
-            //     paint: {
-            //         "sky-type": "atmosphere",
-            //         "sky-atmosphere-sun": [0.0, 0.0],
-            //         "sky-atmosphere-sun-intensity": 15,
-            //     },
-            // });
-
-            // Add 3D buildings layer - first add the source
-            // if (!map.current!.getSource("openmaptiles")) {
-            //     map.current!.addSource("openmaptiles", {
-            //         type: "vector",
-            //         url: "https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",
-            //     });
-            // }
-
-            // const layers = map.current!.getStyle().layers;
-            // const labelLayerId = layers?.find((layer) => layer.type === "symbol" && layer.layout?.["text-field"])?.id;
-
-            // map.current!.addLayer(
-            //     {
-            //         id: "add-3d-buildings",
-            //         source: "openmaptiles",
-            //         "source-layer": "building",
-            //         filter: ["==", "extrude", "true"],
-            //         type: "fill-extrusion",
-            //         minzoom: 15,
-            //         paint: {
-            //             "fill-extrusion-color": "#4a5568",
-            //             "fill-extrusion-height": ["interpolate", ["linear"], ["zoom"], 15, 0, 15.05, ["get", "height"]],
-            //             "fill-extrusion-base": ["interpolate", ["linear"], ["zoom"], 15, 0, 15.05, ["get", "min_height"]],
-            //             "fill-extrusion-opacity": 0.8,
-            //         },
-            //     },
-            //     labelLayerId
-            // );
-
             // Helper function to create circle GeoJSON
             const createCircle = (center: [number, number], radiusInKm: number, points = 64) => {
                 const coords = {
