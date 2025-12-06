@@ -6,14 +6,14 @@ export default function PointDetailsDrawer({ isOpen, onClose }: { isOpen: boolea
     return (
         <Drawer
             className="rounded-2xl"
-            maskStyle={{ backgroundColor: "transparent" }}
+            styles={{ mask: { backgroundColor: "transparent" } }}
             size={"large"}
             style={{ backgroundColor: "rgb(0 0 0 / 0.7)" }}
             placement={"bottom"}
             mask={{ blur: false }}
             closable={false}
             onClose={onClose}
-            open={true}
+            open={isOpen}
             key={"drawer"}
         >
             {/* <div className="mx-auto h-[4px] w-24 rounded-2xl bg-white/50"></div> */}
