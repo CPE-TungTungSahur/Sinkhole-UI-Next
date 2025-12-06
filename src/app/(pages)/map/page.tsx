@@ -14,6 +14,27 @@ const sinkholePredictions = [
     { id: 5, coordinates: [-84.988, 29.722], risk: "medium", location: "Tallahassee, FL" },
 ];
 
+async function fetchSinkholePredictions() {
+    try {
+        const res = await fetch("/api/dev/predict");
+
+        if (!res.ok) {
+            throw new Error("Backend API error");
+        }
+
+        return await res.json();
+    } catch (err) {
+        console.error("Error fetching sinkhole predictions:", err);
+        return null;
+    }
+}
+
+function getRiskColor(prob: number) {
+    if (prob > 0.3) return "hsl(0 84% 60%)"; // High risk but should be greater than 0.716
+    if (prob > 0.2) return "hsl(25 95% 53%)"; // Medium risk but should be between 0.5 and 0.716
+    return "hsl(189 94% 43%)"; // low
+}
+
 export default function MapPage() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
@@ -36,7 +57,11 @@ export default function MapPage() {
 
         map.current.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), "right");
 
-        map.current.on("load", () => {
+        map.current.on("load", async () => {
+            const result = await fetchSinkholePredictions();
+            console.log("Fetched predictions:", result);
+            const point = result.data;
+            console.log("Predicted point:", point);
             // Add 3D terrain
             map.current!.addSource("mapbox-dem", {
                 type: "raster-dem",
@@ -168,8 +193,14 @@ export default function MapPage() {
                 });
             });
 
+            if (!Array.isArray(point)) {
+                console.error("❌ ERROR: expected result.data to be an array, got:", point);
+                return;
+            }
+
             // Add markers for each predicted sinkhole location
-            sinkholePredictions.forEach((prediction) => {
+            point.forEach((prediction) => {
+                if (prediction.risk < 0.2) return; // Should be less than 0.5 but this is for testing na
                 const el = document.createElement("div");
                 el.className = "sinkhole-marker";
                 el.style.width = "24px";
@@ -178,41 +209,39 @@ export default function MapPage() {
                 el.style.cursor = "pointer";
                 el.style.border = "3px solid";
 
-                if (prediction.risk === "high") {
+                if (prediction.risk > 0.3) {
+                    // Should be greater than 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(0 84% 60%)";
                     el.style.borderColor = "hsl(0 84% 70%)";
                     el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
-                } else if (prediction.risk === "medium") {
+                } else if (prediction.risk > 0.2) {
+                    // Should be between 0.5 and 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(25 95% 53%)";
                     el.style.borderColor = "hsl(25 95% 63%)";
                     el.style.boxShadow = "0 0 20px hsl(25 95% 53% / 0.6)";
-                } else {
-                    el.style.backgroundColor = "hsl(189 94% 43%)";
-                    el.style.borderColor = "hsl(189 94% 53%)";
-                    el.style.boxShadow = "0 0 20px hsl(189 94% 43% / 0.6)";
                 }
+
+                const color = getRiskColor(prediction.risk);
 
                 const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
                     <div style="padding: 8px; background: hsl(222 47% 11%); color: hsl(210 40% 98%);">
-                        <h3 style="font-weight: bold; margin-bottom: 4px;">${prediction.location}</h3>
-                        <p style="margin: 0; text-transform: capitalize;">Risk Level: <span style="color: ${
-                            prediction.risk === "high"
-                                ? "hsl(0 84% 60%)"
-                                : prediction.risk === "medium"
-                                  ? "hsl(25 95% 53%)"
-                                  : "hsl(189 94% 43%)"
-                        };">${prediction.risk}</span></p>
+                        <p><b>Lat:</b> ${prediction.lat}</p>
+                        <p><b>Lon:</b> ${prediction.lon}</p>
+                        <p><b>Risk Score:</b> ${prediction.risk.toFixed(3)}</p>
+                        <p><b>Risk Level:</b> <span style="color: ${color}; font-weight: bold;">
+                            ${prediction.risk > 0.6 ? "High" : prediction.risk > 0.3 ? "Medium" : "Low"}
+                        </span></p>
                     </div>
                 `);
 
                 const marker = new mapboxgl.Marker(el)
-                    .setLngLat(prediction.coordinates as [number, number])
+                    .setLngLat([prediction.lon, prediction.lat])
                     .setPopup(popup)
                     .addTo(map.current!);
 
                 el.addEventListener("click", (e) => {
                     e.stopPropagation();
-                    console.log("Marker clicked:", prediction.coordinates);
+                    console.log("Marker clicked:", prediction.lat, prediction.lon);
                 });
             });
         });
@@ -235,10 +264,6 @@ export default function MapPage() {
                     <div className="flex items-center gap-2">
                         <div className="border-warning h-4 w-4 rounded-full bg-[#f97414] shadow-[0_0_20px_#f97414]" />
                         <span className="text-sm text-white">Medium Risk</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="border-primary h-4 w-4 rounded-full bg-[#05b6d4] shadow-[0_0_20px_#05b6d4]" />
-                        <span className="text-sm text-white">Low Risk</span>
                     </div>
                 </div>
             </div>
