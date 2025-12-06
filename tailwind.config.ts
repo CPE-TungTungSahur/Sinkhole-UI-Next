@@ -9,10 +9,7 @@ const config: Config = {
         // Or if using `src` directory:
         "./src/**/*.{js,ts,jsx,tsx,mdx}",
     ],
-    theme: {
-        extend: {},
-    },
-    plugins: [],
+    plugins: [require("tailwindcss-animate")],
 };
 
 export default config;

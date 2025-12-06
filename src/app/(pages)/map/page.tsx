@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
+import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 
 export interface IPredictedPoint {
     lat: number;
@@ -37,6 +38,7 @@ export default function MapPage() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const [predictedPoints, setPredictedPoints] = useState<IPredictedPoint[]>([]);
+    const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
 
     useEffect(() => {
         if (!mapContainer.current || map.current) return;
@@ -176,6 +178,7 @@ export default function MapPage() {
 
     function handlePointDetails(point: IPredictedPoint): void {
         console.log("Marker clicked:", point.line);
+        setIsOpenDetailsDrawer(true);
     }
 
     return (
@@ -194,6 +197,7 @@ export default function MapPage() {
                         <span className="text-sm text-white">Medium Risk</span>
                     </div>
                 </div>
+                <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} />
             </div>
         </>
     );
