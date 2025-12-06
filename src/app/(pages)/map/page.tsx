@@ -49,9 +49,9 @@ export default function MapPage() {
             container: mapContainer.current,
             style: "mapbox://styles/imjustnon/cmi6dr20a007101s37mixcehz",
             center: [100.5018, 13.7563], // Bangkok
-            zoom: 17,
+            zoom: 13,
             pitch: 50,
-            bearing: -17.6,
+            bearing: 17.6,
             antialias: true,
         });
 
@@ -183,7 +183,7 @@ export default function MapPage() {
 
     return (
         <>
-            <div className="relative w-full">
+            <div className="relative w-full bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
                 <div ref={mapContainer} className="absolute inset-0 min-h-screen" />
                 {/* Legend */}
                 <div className="bg-card/90 border-border absolute bottom-8 left-8 space-y-2 rounded-lg bg-[#0000]/50 p-4 backdrop-blur-sm md:bottom-[25rem]">
