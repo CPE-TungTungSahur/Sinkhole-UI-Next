@@ -3,7 +3,7 @@
 import Image from "next/image";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
 
 const sinkholePredictions = [
@@ -218,7 +218,10 @@ export default function MapPage() {
         });
 
         return () => {
-            map.current?.remove();
+            if (map.current) {
+                map.current.remove();
+                map.current = null;
+            }
         };
     }, []);
     return (
