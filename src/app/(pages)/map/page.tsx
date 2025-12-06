@@ -143,16 +143,7 @@ export default function MapPage() {
                     el.style.boxShadow = "0 0 20px hsl(25 95% 53% / 0.6)";
                 }
 
-                const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-                    <div style="padding: 8px; background: hsl(222 47% 11%); color: hsl(210 40% 98%);">
-                        <p><b>Location:</b> </p>
-                        <p><b>Risk Level:</b> <span style="color: ${getRiskColor(point.risk)}; font-weight: bold;">
-                            ${point.risk}
-                        </span></p>
-                    </div>
-                `);
-
-                const marker = new mapboxgl.Marker(el).setLngLat([point.lon, point.lat]).setPopup(popup).addTo(map.current!);
+                const marker = new mapboxgl.Marker(el).setLngLat([point.lon, point.lat]).addTo(map.current!);
 
                 el.addEventListener("click", (e) => {
                     e.stopPropagation();
