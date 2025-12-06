@@ -215,28 +215,24 @@ export default function MapPage() {
                     el.style.boxShadow = "0 0 20px hsl(25 95% 53% / 0.6)";
                 }
 
-                /*const color = getRiskColor(prediction.risk);
-
                 const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
                     <div style="padding: 8px; background: hsl(222 47% 11%); color: hsl(210 40% 98%);">
-                        <p><b>Lat:</b> ${prediction.lat}</p>
-                        <p><b>Lon:</b> ${prediction.lon}</p>
-                        <p><b>Risk Score:</b> ${prediction.risk.toFixed(3)}</p>
-                        <p><b>Risk Level:</b> <span style="color: ${color}; font-weight: bold;">
-                            ${prediction.risk > 0.6 ? "High" : prediction.risk > 0.3 ? "Medium" : "Low"}
+                        <p><b>Location:</b> ${prediction.location}</p>
+                        <p><b>Risk Level:</b> <span style="color: ${prediction.risk === "high" ? "#ef4444" : "#f97316"}; font-weight: bold;">
+                            ${prediction.risk.charAt(0).toUpperCase() + prediction.risk.slice(1)}
                         </span></p>
                     </div>
                 `);
 
-                /*const marker = new mapboxgl.Marker(el)
-                    .setLngLat([prediction.lon, prediction.lat])
+                const marker = new mapboxgl.Marker(el)
+                    .setLngLat(prediction.coordinates as [number, number])
                     .setPopup(popup)
                     .addTo(map.current!);
 
                 el.addEventListener("click", (e) => {
                     e.stopPropagation();
-                    console.log("Marker clicked:", prediction.lat, prediction.lon);
-                });*/
+                    console.log("Marker clicked:", prediction.location);
+                });
             });
         });
 
