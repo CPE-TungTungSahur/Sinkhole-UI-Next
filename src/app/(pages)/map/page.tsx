@@ -28,9 +28,9 @@ export interface IAPIPredictedPoint {
 }
 
 function getRiskColor(prob: number) {
-    if (prob > 0.3) return "hsl(0, 84%, 60%)"; // High risk but should be greater than 0.716
-    if (prob > 0.2) return "hsl(25, 95%, 53%)"; // Medium risk but should be between 0.5 and 0.716
-    return "hsl(189, 94%, 43%)"; // low
+    if (prob > 0.25) return "#ef4444"; // High
+    if (prob > 0.1) return "#f97316"; // Medium
+    return "#06b6d4"; // low
 }
 
 export default function MapPage() {
@@ -41,7 +41,6 @@ export default function MapPage() {
     useEffect(() => {
         if (!mapContainer.current || map.current) return;
 
-        console.log(config.api.boxMap.token);
         mapboxgl.accessToken = config.api.boxMap.token;
 
         map.current = new mapboxgl.Map({
@@ -88,19 +87,20 @@ export default function MapPage() {
 
             // Add circle areas for each prediction
             predictedPoints.forEach((point, index) => {
-                const circle = createCircle([point.lon, point.lat], 0.2);
+                if (point.risk < 0.1) return;
+                const circle = createCircle([point.lon, point.lat], 0.1);
 
                 // Add source for this circle
-                map.current!.addSource(`circle-${point.line}-${index}`, {
+                map.current!.addSource(`circle-${index}`, {
                     type: "geojson",
                     data: circle as any,
                 });
 
                 // Add fill layer
                 map.current!.addLayer({
-                    id: `circle-fill-${point.line}-${index}`,
+                    id: `circle-fill-${index}`,
                     type: "fill",
-                    source: `circle-${point.line}-${index}`,
+                    source: `circle-${index}`,
                     paint: {
                         "fill-color": getRiskColor(point.risk),
                         "fill-opacity": 0.2,
@@ -109,9 +109,9 @@ export default function MapPage() {
 
                 // Add border layer
                 map.current!.addLayer({
-                    id: `circle-border-${point.line}-${index}`,
+                    id: `circle-border-${index}`,
                     type: "line",
-                    source: `circle-${point.line}-${index}`,
+                    source: `circle-${index}`,
                     paint: {
                         "line-color": getRiskColor(point.risk),
                         "line-width": 2,
@@ -121,8 +121,8 @@ export default function MapPage() {
             });
 
             // Add markers for each predicted sinkhole location
-            predictedPoints.forEach((point) => {
-                // if (point.risk < 2) return; // Should be less than 0.5 but this is for testing na
+            predictedPoints.forEach((point: IPredictedPoint) => {
+                if (point.risk < 0.1) return;
                 const el = document.createElement("div");
                 el.className = "sinkhole-marker";
                 el.style.width = "24px";
@@ -131,12 +131,12 @@ export default function MapPage() {
                 el.style.cursor = "pointer";
                 el.style.border = "3px solid";
 
-                if (point.risk > 1) {
+                if (point.risk > 0.25) {
                     // Should be greater than 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(0 84% 60%)";
                     el.style.borderColor = "hsl(0 84% 70%)";
                     el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
-                } else if (point.risk > 2) {
+                } else if (point.risk > 0.1) {
                     // Should be between 0.5 and 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(25 95% 53%)";
                     el.style.borderColor = "hsl(25 95% 63%)";
@@ -145,7 +145,7 @@ export default function MapPage() {
 
                 const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
                     <div style="padding: 8px; background: hsl(222 47% 11%); color: hsl(210 40% 98%);">
-                        <p><b>Location:</b> ${point.line}</p>
+                        <p><b>Location:</b> </p>
                         <p><b>Risk Level:</b> <span style="color: ${getRiskColor(point.risk)}; font-weight: bold;">
                             ${point.risk}
                         </span></p>
@@ -156,7 +156,7 @@ export default function MapPage() {
 
                 el.addEventListener("click", (e) => {
                     e.stopPropagation();
-                    console.log("Marker clicked:", point.line);
+                    handlePointDetails(point);
                 });
             });
         });
@@ -182,6 +182,10 @@ export default function MapPage() {
             setPredictedPoints(getPredictedPoint.data.data);
         })();
     }, []);
+
+    function handlePointDetails(point: IPredictedPoint): void {
+        console.log("Marker clicked:", point.line);
+    }
 
     return (
         <>
