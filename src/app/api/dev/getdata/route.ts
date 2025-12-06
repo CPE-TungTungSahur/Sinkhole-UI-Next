@@ -4,7 +4,7 @@ export async function GET() {
     try {
         const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
 
-        const response = await fetch(`${FASTAPI_URL}/latest-map`);
+        const response = await fetch(`${FASTAPI_URL}/latest-geojson`);
 
         if (!response.ok) {
             return NextResponse.json({ error: "FastAPI server error" }, { status: response.status });

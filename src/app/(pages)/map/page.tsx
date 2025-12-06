@@ -16,7 +16,7 @@ const sinkholePredictions = [
 
 async function fetchSinkholePredictions() {
     try {
-        const res = await fetch("/api/dev/predict");
+        const res = await fetch("/api/dev/getdata");
 
         if (!res.ok) {
             throw new Error("Backend API error");
@@ -60,8 +60,7 @@ export default function MapPage() {
         map.current.on("load", async () => {
             const result = await fetchSinkholePredictions();
             console.log("Fetched predictions:", result);
-            const point = result.data;
-            console.log("Predicted point:", point);
+
             // Add 3D terrain
             map.current!.addSource("mapbox-dem", {
                 type: "raster-dem",
@@ -193,14 +192,9 @@ export default function MapPage() {
                 });
             });
 
-            if (!Array.isArray(point)) {
-                console.error("❌ ERROR: expected result.data to be an array, got:", point);
-                return;
-            }
-
             // Add markers for each predicted sinkhole location
-            point.forEach((prediction) => {
-                if (prediction.risk < 0.2) return; // Should be less than 0.5 but this is for testing na
+            sinkholePredictions.forEach((prediction) => {
+                if (prediction.risk == "low") return; // Should be less than 0.5 but this is for testing na
                 const el = document.createElement("div");
                 el.className = "sinkhole-marker";
                 el.style.width = "24px";
@@ -209,19 +203,19 @@ export default function MapPage() {
                 el.style.cursor = "pointer";
                 el.style.border = "3px solid";
 
-                if (prediction.risk > 0.3) {
+                if (prediction.risk == "high") {
                     // Should be greater than 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(0 84% 60%)";
                     el.style.borderColor = "hsl(0 84% 70%)";
                     el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
-                } else if (prediction.risk > 0.2) {
+                } else if (prediction.risk == "medium") {
                     // Should be between 0.5 and 0.716 but this is for testing
                     el.style.backgroundColor = "hsl(25 95% 53%)";
                     el.style.borderColor = "hsl(25 95% 63%)";
                     el.style.boxShadow = "0 0 20px hsl(25 95% 53% / 0.6)";
                 }
 
-                const color = getRiskColor(prediction.risk);
+                /*const color = getRiskColor(prediction.risk);
 
                 const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
                     <div style="padding: 8px; background: hsl(222 47% 11%); color: hsl(210 40% 98%);">
@@ -234,7 +228,7 @@ export default function MapPage() {
                     </div>
                 `);
 
-                const marker = new mapboxgl.Marker(el)
+                /*const marker = new mapboxgl.Marker(el)
                     .setLngLat([prediction.lon, prediction.lat])
                     .setPopup(popup)
                     .addTo(map.current!);
@@ -242,7 +236,7 @@ export default function MapPage() {
                 el.addEventListener("click", (e) => {
                     e.stopPropagation();
                     console.log("Marker clicked:", prediction.lat, prediction.lon);
-                });
+                });*/
             });
         });
 
