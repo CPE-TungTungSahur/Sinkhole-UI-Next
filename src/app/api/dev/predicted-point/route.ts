@@ -1,10 +1,9 @@
+import { config } from "@/config/config";
 import { NextResponse } from "next/server";
 
 export async function POST() {
     try {
-        const FASTAPI_URL = process.env.FASTAPI_URL || "http://localhost:8000";
-
-        const response = await fetch(`${FASTAPI_URL}/latest-map`);
+        const response = await fetch(`${config.api.backendUrl}/latest-map`);
 
         if (!response.ok) {
             return NextResponse.json({ error: "FastAPI server error" }, { status: response.status });

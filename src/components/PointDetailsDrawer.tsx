@@ -18,7 +18,7 @@ export default function PointDetailsDrawer({ isOpen, onClose }: { isOpen: boolea
         >
             {/* <div className="mx-auto h-[4px] w-24 rounded-2xl bg-white/50"></div> */}
             <div className="mt-5 flex flex-row items-center">
-                <X className="cursor-pointer text-white" size={30} />
+                <X className="cursor-pointer text-white" size={30} onClick={() => onClose()} />
                 <div className="ml-5 text-2xl font-bold text-cyan-400">
                     Prediction <span className="text-white">Details</span>
                 </div>
