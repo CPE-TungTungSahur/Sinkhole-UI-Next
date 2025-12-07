@@ -1,9 +1,9 @@
 import { config } from "@/config/config";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function POST() {
     try {
-        const response = await fetch(`${config.api.backendUrl}/latest-geojson`);
+        const response = await fetch(`http://srv.aboutnon.in.th:4844/latest-geojson`);
 
         if (!response.ok) {
             return NextResponse.json({ error: "FastAPI server error" }, { status: response.status });
