@@ -8,15 +8,6 @@ import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 
-export interface IPredictedPoint {
-    lat: number;
-    lon: number;
-    risk: number;
-    line: string;
-    color: string;
-    point_type: string;
-}
-
 export interface IGeoJSONFeature {
     type: "Feature";
     geometry: {
@@ -49,7 +40,8 @@ export default function MapPage() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const markersRef = useRef<mapboxgl.Marker[]>([]);
-    const [predictedPoints, setPredictedPoints] = useState<IPredictedPoint[]>([]);
+    const [geoJsonData, setGeoJsonData] = useState<IGeoJSONResponse | null>(null);
+    const [selectedFeature, setSelectedFeature] = useState<IGeoJSONFeature | null>(null);
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
 
@@ -83,9 +75,9 @@ export default function MapPage() {
         };
     }, []);
 
-    // Update markers when predictedPoints change
+    // Update markers when geoJsonData changes
     useEffect(() => {
-        if (!map.current || !isMapLoaded) return;
+        if (!map.current || !isMapLoaded || !geoJsonData) return;
 
         // Helper function to create circle GeoJSON
         const createCircle = (center: [number, number], radiusInKm: number, points = 64) => {
@@ -110,39 +102,21 @@ export default function MapPage() {
             return ret;
         };
 
-        // Filter points with risk >= 0.1
-        const filteredPoints = predictedPoints.filter((point) => point.risk >= 0.1);
+        // Filter features with risk >= 0.1
+        const filteredFeatures = geoJsonData.geojson.features.filter((feature) => feature.properties.risk >= 0.1);
 
         // Create GeoJSON FeatureCollection for circles
         const circlesGeoJSON = {
             type: "FeatureCollection" as const,
-            features: filteredPoints.map((point) => ({
+            features: filteredFeatures.map((feature) => ({
                 type: "Feature" as const,
                 geometry: {
                     type: "Polygon" as const,
-                    coordinates: [createCircle([point.lon, point.lat], 0.1)],
+                    coordinates: [createCircle(feature.geometry.coordinates, 0.1)],
                 },
                 properties: {
-                    risk: point.risk,
-                    color: getRiskColor(point.risk),
-                },
-            })),
-        };
-
-        // Create GeoJSON FeatureCollection for point markers
-        const markersGeoJSON = {
-            type: "FeatureCollection" as const,
-            features: filteredPoints.map((point) => ({
-                type: "Feature" as const,
-                geometry: {
-                    type: "Point" as const,
-                    coordinates: [point.lon, point.lat],
-                },
-                properties: {
-                    risk: point.risk,
-                    color: getRiskColor(point.risk),
-                    line: point.line,
-                    pointType: point.point_type,
+                    risk: feature.properties.risk,
+                    color: getRiskColor(feature.properties.risk),
                 },
             })),
         };
@@ -159,7 +133,7 @@ export default function MapPage() {
         }
 
         // Add circles source and layers
-        if (filteredPoints.length > 0) {
+        if (filteredFeatures.length > 0) {
             map.current!.addSource("circles", {
                 type: "geojson",
                 data: circlesGeoJSON as any,
@@ -194,7 +168,7 @@ export default function MapPage() {
         markersRef.current = [];
 
         // Add markers for each predicted sinkhole location
-        filteredPoints.forEach((point: IPredictedPoint) => {
+        filteredFeatures.forEach((feature: IGeoJSONFeature) => {
             const el = document.createElement("div");
             el.className = "sinkhole-marker";
             el.style.width = "24px";
@@ -203,28 +177,30 @@ export default function MapPage() {
             el.style.cursor = "pointer";
             el.style.border = "3px solid";
 
-            if (point.risk > 0.25) {
+            const risk = feature.properties.risk;
+
+            if (risk > 0.25) {
                 // Should be greater than 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(0 84% 60%)";
                 el.style.borderColor = "hsl(0 84% 70%)";
                 el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
-            } else if (point.risk > 0.1) {
+            } else if (risk > 0.1) {
                 // Should be between 0.5 and 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(25 95% 53%)";
                 el.style.borderColor = "hsl(25 95% 63%)";
                 el.style.boxShadow = "0 0 20px hsl(25 95% 53% / 0.6)";
             }
 
-            const marker = new mapboxgl.Marker(el).setLngLat([point.lon, point.lat]).addTo(map.current!);
+            const marker = new mapboxgl.Marker(el).setLngLat(feature.geometry.coordinates).addTo(map.current!);
 
             el.addEventListener("click", (e) => {
                 e.stopPropagation();
-                handlePointDetails(point);
+                handleFeatureClick(feature);
             });
 
             markersRef.current.push(marker);
         });
-    }, [predictedPoints, isMapLoaded]);
+    }, [geoJsonData, isMapLoaded]);
 
     useEffect(() => {
         (async () => {
@@ -238,27 +214,16 @@ export default function MapPage() {
                 );
 
                 console.log("GeoJSON Response:", response.data);
-
-                // Transform GeoJSON features to IPredictedPoint format
-                const points: IPredictedPoint[] = response.data.geojson.features.map((feature) => ({
-                    lon: feature.geometry.coordinates[0],
-                    lat: feature.geometry.coordinates[1],
-                    risk: feature.properties.risk,
-                    line: feature.properties.line,
-                    color: feature.properties.color,
-                    point_type: feature.properties.point_type,
-                }));
-
-                console.log("Transformed points:", points);
-                setPredictedPoints(points);
+                setGeoJsonData(response.data);
             } catch (error) {
                 console.error("Error fetching predicted points:", error);
             }
         })();
     }, []);
 
-    function handlePointDetails(point: IPredictedPoint): void {
-        console.log("Marker clicked:", point.line);
+    function handleFeatureClick(feature: IGeoJSONFeature): void {
+        console.log("Marker clicked:", feature.properties.line);
+        setSelectedFeature(feature);
         setIsOpenDetailsDrawer(true);
     }
 
