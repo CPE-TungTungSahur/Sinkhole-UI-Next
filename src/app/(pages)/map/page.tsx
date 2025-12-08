@@ -16,16 +16,27 @@ export interface IPredictedPoint {
     color: string;
     point_type: string;
 }
-export interface IAPIPredictedPoint {
-    date: string;
-    data: {
-        lat: number;
-        lon: number;
+
+export interface IGeoJSONFeature {
+    type: "Feature";
+    geometry: {
+        type: "Point";
+        coordinates: [number, number]; // [longitude, latitude]
+    };
+    properties: {
         risk: number;
         line: string;
         color: string;
         point_type: string;
-    }[];
+    };
+}
+
+export interface IGeoJSONResponse {
+    file: string;
+    geojson: {
+        type: "FeatureCollection";
+        features: IGeoJSONFeature[];
+    };
 }
 
 function getRiskColor(prob: number) {
@@ -217,15 +228,32 @@ export default function MapPage() {
 
     useEffect(() => {
         (async () => {
-            const getPredictedPoint: AxiosResponse<IAPIPredictedPoint> = await axios.post(
-                "/api/dev/predicted-point",
-                {},
-                {
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
-            console.log(getPredictedPoint.data.data);
-            setPredictedPoints(getPredictedPoint.data.data);
+            try {
+                const response: AxiosResponse<IGeoJSONResponse> = await axios.post(
+                    "/api/dev/predicted-point",
+                    {},
+                    {
+                        headers: { "Content-Type": "application/json" },
+                    }
+                );
+
+                console.log("GeoJSON Response:", response.data);
+
+                // Transform GeoJSON features to IPredictedPoint format
+                const points: IPredictedPoint[] = response.data.geojson.features.map((feature) => ({
+                    lon: feature.geometry.coordinates[0],
+                    lat: feature.geometry.coordinates[1],
+                    risk: feature.properties.risk,
+                    line: feature.properties.line,
+                    color: feature.properties.color,
+                    point_type: feature.properties.point_type,
+                }));
+
+                console.log("Transformed points:", points);
+                setPredictedPoints(points);
+            } catch (error) {
+                console.error("Error fetching predicted points:", error);
+            }
         })();
     }, []);
 
