@@ -22,7 +22,7 @@ const members: IMember[] = [
         firstname: "Thanachot",
         lastname: "Thetkan",
         id: "68070501017",
-        role: "Trust me i wont forget to add",
+        role: "Machine Learning",
     },
     {
         profile: minFace,
@@ -30,7 +30,7 @@ const members: IMember[] = [
         firstname: "Kwanpapha",
         lastname: "Kosaiyaporn",
         id: "68070501006",
-        role: "Trust me i wont forget to add",
+        role: "Machine Learning",
     },
     {
         profile: boomFace,
@@ -38,7 +38,7 @@ const members: IMember[] = [
         firstname: "Patipol",
         lastname: "Pongsawat",
         id: "68070501029",
-        role: "Trust me i wont forget to add",
+        role: "Web Backend",
     },
     {
         profile: nonFace,
@@ -46,7 +46,7 @@ const members: IMember[] = [
         firstname: "Kanakorn",
         lastname: "Thaiprakhon",
         id: "68070501007",
-        role: "Trust me i wont forget to add",
+        role: "Web Frontend",
     },
 ];
 
