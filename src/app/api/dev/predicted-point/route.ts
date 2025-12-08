@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST() {
     try {
-        const response = await fetch(`${config.api.backendUrl}/latest-map`);
+        const response = await fetch(`${config.api.backendUrl}/latest-geojson`);
 
         if (!response.ok) {
             return NextResponse.json({ error: "FastAPI server error" }, { status: response.status });
