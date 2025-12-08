@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
+import { useLoading } from "@/contexts/LoadingContext";
 
 export interface IGeoJSONFeature {
     type: "Feature";
@@ -44,6 +45,7 @@ export default function MapPage() {
     const [selectedFeature, setSelectedFeature] = useState<IGeoJSONFeature | null>(null);
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
+    const { startLoading, stopLoading } = useLoading();
 
     // Initialize map only once
     useEffect(() => {
@@ -205,6 +207,7 @@ export default function MapPage() {
     useEffect(() => {
         (async () => {
             try {
+                startLoading();
                 const response: AxiosResponse<IGeoJSONResponse> = await axios.post(
                     "/api/dev/predicted-point",
                     {},
@@ -217,9 +220,11 @@ export default function MapPage() {
                 setGeoJsonData(response.data);
             } catch (error) {
                 console.error("Error fetching predicted points:", error);
+            } finally {
+                stopLoading();
             }
         })();
-    }, []);
+    }, [startLoading, stopLoading]);
 
     function handleFeatureClick(feature: IGeoJSONFeature): void {
         console.log("Marker clicked:", feature.properties.line);
