@@ -221,7 +221,7 @@ export default function MapPage() {
                     }
                 );
 
-                console.log("GeoJSON Response:", response.data);
+                // console.log("GeoJSON Response:", response.data);
                 setGeoJsonData(response.data);
             } catch (error) {
                 console.error("Error fetching predicted points:", error);
@@ -232,7 +232,7 @@ export default function MapPage() {
     }, [startLoading, stopLoading]);
 
     function handleFeatureClick(feature: IGeoJSONFeature): void {
-        console.log("Marker clicked:", feature.properties.line);
+        console.log("Marker clicked:", feature.geometry.coordinates.join(", "));
         setSelectedFeature(feature);
         setIsOpenDetailsDrawer(true);
     }
