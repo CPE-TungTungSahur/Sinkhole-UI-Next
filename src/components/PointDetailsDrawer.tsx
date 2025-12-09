@@ -4,7 +4,7 @@ import { IGeoJSONFeature } from "@/app/(pages)/map/page";
 import { useLoading } from "@/contexts/LoadingContext";
 import { Drawer } from "antd";
 import axios, { AxiosResponse } from "axios";
-import { X } from "lucide-react";
+import { Loader, LoaderCircle, Wifi, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, RadialLinearScale, Filler } from "chart.js";
 import { Line, Radar } from "react-chartjs-2";
@@ -40,7 +40,7 @@ interface IPointFeatures {
 export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }: { isOpen: boolean; onClose: () => void; selectedFeature: IGeoJSONFeature | null }): React.JSX.Element {
     const [pointFeatures, setPointFeatures] = useState<IPointFeatures | null>(null);
     const [features, setFeatures] = useState<IFeature[]>([]);
-    const { startLoading, stopLoading } = useLoading();
+    const { startLoading, stopLoading, isLoading } = useLoading();
 
     useEffect(() => {
         if (!isOpen) return;
@@ -81,7 +81,7 @@ export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }:
 
     return (
         <Drawer
-            className="rounded-2xl py-5"
+            className="rounded-2xl"
             styles={{ mask: { backgroundColor: "transparent" } }}
             size={"large"}
             style={{ backgroundColor: "rgb(0 0 0 / 0.7)" }}
@@ -92,46 +92,75 @@ export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }:
             open={isOpen}
             key={"drawer"}
         >
-            <div className="flex flex-row items-center">
+            <div className="fixed flex w-full flex-row items-center">
                 <X className="cursor-pointer text-white" size={30} onClick={() => onClose()} />
                 <div className="ml-5 text-2xl font-bold text-cyan-400">
                     Prediction <span className="text-white">Details</span>
                 </div>
             </div>
-
-            <div className="flex h-full w-full flex-col">
-                <Line
-                    className="mx-auto h-full w-full"
-                    data={{
-                        labels: features.map((f: IFeature) => f.timestamp),
-                        datasets:
-                            pointFeatures?.columns.map((column, i) => {
-                                const colors = ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)", "rgba(54, 162, 235, 1)", "rgba(255, 206, 86, 1)", "rgba(153, 102, 255, 1)", "rgba(255, 159, 64, 1)"];
-                                const color = colors[i % colors.length];
-                                return {
-                                    label: column,
-                                    data: features.map((f: IFeature) => (f as any)[column]),
-                                    borderColor: color,
-                                    backgroundColor: color.replace("1)", "0.5)"),
-                                    tension: 0.4,
-                                };
-                            }) || [],
-                    }}
-                    options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: "right" },
-                            title: {
-                                display: true,
-                                text: "Feature Data Over Time",
+            {!isLoading ? (
+                <div className="mt-16 flex h-full w-full flex-col">
+                    {/* <div className="flex flex-row justify-center">
+                        <div className="w-20 clear-start">asdasd</div>
+                    </div> */}
+                    <Line
+                        className="mx-auto h-full w-full"
+                        data={{
+                            labels: features.map((f: IFeature) => f.timestamp),
+                            datasets:
+                                pointFeatures?.columns.map((column, i) => {
+                                    const colors = [
+                                        "rgba(75, 192, 192, 1)",
+                                        "rgba(255, 99, 132, 1)",
+                                        "rgba(54, 162, 235, 1)",
+                                        "rgba(255, 206, 86, 1)",
+                                        "rgba(153, 102, 255, 1)",
+                                        "rgba(255, 159, 64, 1)",
+                                    ];
+                                    const color = colors[i % colors.length];
+                                    return {
+                                        label: column,
+                                        data: features.map((f: IFeature) => (f as any)[column]),
+                                        borderColor: color,
+                                        backgroundColor: color.replace("1)", "0.5)"),
+                                        tension: 0.4,
+                                    };
+                                }) || [],
+                        }}
+                        options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            color: "#fff",
+                            plugins: {
+                                legend: {
+                                    position: "right",
+                                    labels: {
+                                        color: "#fff",
+                                    },
+                                },
+                                // title: {
+                                //     color: "white",
+                                //     display: true,
+                                //     text: "Feature Data Over Time",
+                                // },
                             },
-                        },
-                    }}
-                />
-
-                {/* <div>asd</div> */}
-            </div>
+                            scales: {
+                                x: {
+                                    ticks: { color: "#fff" },
+                                },
+                                y: {
+                                    ticks: { color: "#fff" },
+                                },
+                            },
+                        }}
+                    />
+                </div>
+            ) : (
+                <div className="flex h-full flex-col items-center justify-center">
+                    <Wifi className="animate-ping text-white" size={60} />
+                    <div className="text-md mt-8 font-bold text-white">Gathering Data. Please wait...</div>
+                </div>
+            )}
         </Drawer>
     );
 }
