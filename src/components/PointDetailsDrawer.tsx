@@ -1,9 +1,15 @@
+"use client";
+
 import { IGeoJSONFeature } from "@/app/(pages)/map/page";
 import { useLoading } from "@/contexts/LoadingContext";
 import { Drawer } from "antd";
 import axios, { AxiosResponse } from "axios";
 import { X } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, RadialLinearScale, Filler } from "chart.js";
+import { Line, Radar } from "react-chartjs-2";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 interface IFeature {
     timestamp: string;
@@ -28,6 +34,7 @@ interface IPointFeatures {
         lon: number;
     };
     features: IFeature[];
+    columns: string[];
 }
 
 export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }: { isOpen: boolean; onClose: () => void; selectedFeature: IGeoJSONFeature | null }): React.JSX.Element {
@@ -74,7 +81,7 @@ export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }:
 
     return (
         <Drawer
-            className="rounded-2xl"
+            className="rounded-2xl py-5"
             styles={{ mask: { backgroundColor: "transparent" } }}
             size={"large"}
             style={{ backgroundColor: "rgb(0 0 0 / 0.7)" }}
@@ -85,12 +92,45 @@ export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }:
             open={isOpen}
             key={"drawer"}
         >
-            <div className="mt-5 flex flex-row items-center">
+            <div className="flex flex-row items-center">
                 <X className="cursor-pointer text-white" size={30} onClick={() => onClose()} />
                 <div className="ml-5 text-2xl font-bold text-cyan-400">
                     Prediction <span className="text-white">Details</span>
                 </div>
-                asd
+            </div>
+
+            <div className="flex h-full w-full flex-col">
+                <Line
+                    className="mx-auto h-full w-full"
+                    data={{
+                        labels: features.map((f: IFeature) => f.timestamp),
+                        datasets:
+                            pointFeatures?.columns.map((column, i) => {
+                                const colors = ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)", "rgba(54, 162, 235, 1)", "rgba(255, 206, 86, 1)", "rgba(153, 102, 255, 1)", "rgba(255, 159, 64, 1)"];
+                                const color = colors[i % colors.length];
+                                return {
+                                    label: column,
+                                    data: features.map((f: IFeature) => (f as any)[column]),
+                                    borderColor: color,
+                                    backgroundColor: color.replace("1)", "0.5)"),
+                                    tension: 0.4,
+                                };
+                            }) || [],
+                    }}
+                    options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: "right" },
+                            title: {
+                                display: true,
+                                text: "Feature Data Over Time",
+                            },
+                        },
+                    }}
+                />
+
+                {/* <div>asd</div> */}
             </div>
         </Drawer>
     );
