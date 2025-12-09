@@ -18,7 +18,7 @@ export default function HomePage() {
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
             <div
-                className={`fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 transition-transform duration-700 ease-in-out ${
+                className={`fixed inset-0 z-30 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 transition-transform duration-700 ease-in-out ${
                     isSliding ? "-translate-y-full" : "translate-y-0"
                 }`}
             >

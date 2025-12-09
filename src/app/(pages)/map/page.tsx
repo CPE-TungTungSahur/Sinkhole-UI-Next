@@ -7,6 +7,12 @@ import { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
+import { useLoading } from "@/contexts/LoadingContext";
+
+const riskBreakPoint = {
+    medium: 0.27,
+    high: 0.3,
+};
 
 export interface IGeoJSONFeature {
     type: "Feature";
@@ -31,8 +37,8 @@ export interface IGeoJSONResponse {
 }
 
 function getRiskColor(prob: number) {
-    if (prob > 0.25) return "#ef4444"; // High
-    if (prob > 0.1) return "#f97316"; // Medium
+    if (prob > riskBreakPoint.medium) return "#ef4444"; // High
+    if (prob > riskBreakPoint.high) return "#f97316"; // Medium
     return "#06b6d4"; // low
 }
 
@@ -44,6 +50,7 @@ export default function MapPage() {
     const [selectedFeature, setSelectedFeature] = useState<IGeoJSONFeature | null>(null);
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
+    const { startLoading, stopLoading } = useLoading();
 
     // Initialize map only once
     useEffect(() => {
@@ -103,7 +110,7 @@ export default function MapPage() {
         };
 
         // Filter features with risk >= 0.1
-        const filteredFeatures = geoJsonData.geojson.features.filter((feature) => feature.properties.risk >= 0.1);
+        const filteredFeatures = geoJsonData.geojson.features.filter((feature) => feature.properties.risk >= riskBreakPoint.medium);
 
         // Create GeoJSON FeatureCollection for circles
         const circlesGeoJSON = {
@@ -112,7 +119,7 @@ export default function MapPage() {
                 type: "Feature" as const,
                 geometry: {
                     type: "Polygon" as const,
-                    coordinates: [createCircle(feature.geometry.coordinates, 0.1)],
+                    coordinates: [createCircle(feature.geometry.coordinates, 0.3)],
                 },
                 properties: {
                     risk: feature.properties.risk,
@@ -179,12 +186,12 @@ export default function MapPage() {
 
             const risk = feature.properties.risk;
 
-            if (risk > 0.25) {
+            if (risk > riskBreakPoint.high) {
                 // Should be greater than 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(0 84% 60%)";
                 el.style.borderColor = "hsl(0 84% 70%)";
                 el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
-            } else if (risk > 0.1) {
+            } else if (risk > riskBreakPoint.medium) {
                 // Should be between 0.5 and 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(25 95% 53%)";
                 el.style.borderColor = "hsl(25 95% 63%)";
@@ -205,6 +212,7 @@ export default function MapPage() {
     useEffect(() => {
         (async () => {
             try {
+                startLoading();
                 const response: AxiosResponse<IGeoJSONResponse> = await axios.post(
                     "/api/dev/predicted-point",
                     {},
@@ -217,9 +225,11 @@ export default function MapPage() {
                 setGeoJsonData(response.data);
             } catch (error) {
                 console.error("Error fetching predicted points:", error);
+            } finally {
+                stopLoading();
             }
         })();
-    }, []);
+    }, [startLoading, stopLoading]);
 
     function handleFeatureClick(feature: IGeoJSONFeature): void {
         console.log("Marker clicked:", feature.properties.line);
@@ -232,15 +242,28 @@ export default function MapPage() {
             <div className="relative w-full bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
                 <div ref={mapContainer} className="absolute inset-0 min-h-screen" />
                 {/* Legend */}
-                <div className="bg-card/90 border-border absolute bottom-8 left-8 space-y-2 rounded-lg bg-[#0000]/50 p-4 backdrop-blur-sm md:bottom-[25rem]">
+                <div className="bg-card/90 border-border absolute bottom-8 left-8 rounded-lg bg-[#0000]/50 p-4 backdrop-blur-sm md:bottom-[25rem]">
                     <h3 className="mb-3 text-sm font-bold text-white">Risk Levels</h3>
                     <div className="flex items-center gap-2">
                         <div className="border-danger h-4 w-4 rounded-full bg-[#ef4443] shadow-[0_0_20px_#ef4443]" />
                         <span className="text-sm text-white">High Risk</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="mt-2 flex items-center gap-2">
                         <div className="border-warning h-4 w-4 rounded-full bg-[#f97414] shadow-[0_0_20px_#f97414]" />
                         <span className="text-sm text-white">Medium Risk</span>
+                    </div>
+
+                    <h3 className="mt-5 text-sm font-bold text-white">Last Update</h3>
+                    <div className="flex flex-row items-center">
+                        <div></div>
+                        <div className="text-sm font-normal text-white">
+                            {geoJsonData
+                                ? new Date(geoJsonData.file.replace(".json", "").split("_")[0] + "T" + geoJsonData.file.replace(".json", "").split("_")[1].replace("-", ":") + ":00").toLocaleString(
+                                      "th-TH",
+                                      { timeZone: "Asia/Bangkok" }
+                                  )
+                                : "Loading..."}
+                        </div>
                     </div>
                 </div>
                 <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} />

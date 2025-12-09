@@ -15,7 +15,7 @@ export default function Navbar(): React.JSX.Element {
 
     return (
         <>
-            <div className="fixed z-50 mt-3 flex w-full flex-row justify-center">
+            <div className="fixed z-20 mt-3 flex w-full flex-row justify-center">
                 <div className="border-border bg-card/80 left-0 top-0 w-fit rounded-full bg-[#0000]/50 shadow-lg backdrop-blur-lg duration-300 xl:mx-60">
                     <div className="container mx-auto w-full">
                         <div className="grid grid-cols-1 items-center justify-between px-10 py-2 md:grid-cols-3">

@@ -22,7 +22,7 @@ const members: IMember[] = [
         firstname: "Thanachot",
         lastname: "Thetkan",
         id: "68070501017",
-        role: "Trust me i wont forget to add",
+        role: "Machine Learning",
     },
     {
         profile: minFace,
@@ -30,7 +30,7 @@ const members: IMember[] = [
         firstname: "Kwanpapha",
         lastname: "Kosaiyaporn",
         id: "68070501006",
-        role: "Trust me i wont forget to add",
+        role: "Machine Learning",
     },
     {
         profile: boomFace,
@@ -38,7 +38,7 @@ const members: IMember[] = [
         firstname: "Patipol",
         lastname: "Pongsawat",
         id: "68070501029",
-        role: "Trust me i wont forget to add",
+        role: "Web Backend",
     },
     {
         profile: nonFace,
@@ -46,7 +46,7 @@ const members: IMember[] = [
         firstname: "Kanakorn",
         lastname: "Thaiprakhon",
         id: "68070501007",
-        role: "Trust me i wont forget to add",
+        role: "Web Frontend",
     },
 ];
 
@@ -55,10 +55,12 @@ export default function Members(): React.JSX.Element {
         <>
             <div className="min-h-screen w-full bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
                 <div className="container mx-auto px-10 pb-20 pt-40">
-                    <div className="grid grid-cols-1 justify-items-center gap-y-16 md:justify-items-start md:gap-y-36 xl:grid-cols-2">
+                    <div className="grid grid-cols-1 justify-items-center gap-y-16 md:gap-y-36 lg:grid-cols-2 lg:justify-items-start">
                         {members.map((m: IMember, i: number) => (
                             <div key={i} className="col-span-1 flex flex-col items-center gap-10 md:flex-row md:items-start">
-                                <Image src={m.profile} className="animate__animated animate__fadeIn animate__fast w-40 rounded-full" alt="member1" />
+                                <div className="animate__animated animate__fadeIn animate__fast relative w-40">
+                                    <Image src={m.profile} className="h-40 w-40 rounded-full" alt="member1" />
+                                </div>
                                 <div className="my-auto hidden h-40 w-1 rounded-xl bg-white md:flex"></div>
                                 <div className="animate-slideLeftIn mt-1 flex flex-col font-bold text-white duration-700 md:mt-10">
                                     <div className="text-white">

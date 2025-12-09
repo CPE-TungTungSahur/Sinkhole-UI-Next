@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import "animate.css";
+import { Suspense } from "react";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -23,7 +24,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     return (
         <html lang="en">
             <body suppressHydrationWarning>
-                <AntdRegistry>{children}</AntdRegistry>
+                <AntdRegistry>
+                    <Suspense>{children}</Suspense>
+                </AntdRegistry>
             </body>
         </html>
     );
