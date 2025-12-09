@@ -37,8 +37,8 @@ export interface IGeoJSONResponse {
 }
 
 function getRiskColor(prob: number) {
-    if (prob > riskBreakPoint.medium) return "#ef4444"; // High
-    if (prob > riskBreakPoint.high) return "#f97316"; // Medium
+    if (prob > riskBreakPoint.high) return "#ef4444"; // High
+    if (prob > riskBreakPoint.medium) return "#f97316"; // Medium
     return "#06b6d4"; // low
 }
 
@@ -266,7 +266,7 @@ export default function MapPage() {
                         </div>
                     </div>
                 </div>
-                <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} />
+                <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} selectedFeature={selectedFeature} />
             </div>
         </>
     );
