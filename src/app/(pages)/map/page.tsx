@@ -28,6 +28,20 @@ export interface IGeoJSONFeature {
     };
 }
 
+export interface PointFeature {
+    timestamp: string;
+    [key: string]: number | string | null;
+}
+
+export interface PointFeatureResponse {
+    point: {
+        lat: number;
+        lon: number;
+    };
+    features: PointFeature[];
+    columns: string[];
+}
+
 export interface IGeoJSONResponse {
     file: string;
     geojson: {
@@ -42,6 +56,13 @@ function getRiskColor(prob: number) {
     return "#06b6d4"; // low
 }
 
+const get_point_feature = async (lat: number, lon: number, end_date: string): Promise<PointFeatureResponse> => {
+    const res = await axios.get<PointFeatureResponse>("/api/dev/get-feature", {
+        params: { lat, lon, end_date },
+    });
+    return res.data;
+};
+
 export default function MapPage() {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
@@ -51,6 +72,8 @@ export default function MapPage() {
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
     const { startLoading, stopLoading } = useLoading();
+    const [pointFeatureData, setPointFeatureData] = useState<PointFeatureResponse | null>(null);
+    const [isFeatureLoading, setIsFeatureLoading] = useState<boolean>(false);
 
     // Initialize map only once
     useEffect(() => {
@@ -231,10 +254,27 @@ export default function MapPage() {
         })();
     }, [startLoading, stopLoading]);
 
-    function handleFeatureClick(feature: IGeoJSONFeature): void {
-        console.log("Marker clicked:", feature.properties.line);
-        setSelectedFeature(feature);
+    async function handleFeatureClick(feature: IGeoJSONFeature) {
+        const [lon, lat] = feature.geometry.coordinates;
         setIsOpenDetailsDrawer(true);
+        try {
+            startLoading();
+            setIsFeatureLoading(true);
+            const data = await get_point_feature(
+                lat,
+                lon,
+                new Date().toISOString().slice(0, 10) // yyyy-mm-dd
+            );
+
+            setIsFeatureLoading(false);
+            setSelectedFeature(feature);
+            setPointFeatureData(data);
+            console.log("Point Feature Data:", data);
+        } catch (error) {
+            console.error("Failed to load point feature", error);
+        } finally {
+            stopLoading();
+        }
     }
 
     return (
@@ -266,7 +306,13 @@ export default function MapPage() {
                         </div>
                     </div>
                 </div>
-                <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} />
+                <PointDetailsDrawer
+                    isOpen={isOpenDetailsDrawer}
+                    onClose={() => setIsOpenDetailsDrawer(false)}
+                    feature={selectedFeature}
+                    pointFeatureData={pointFeatureData}
+                    isFeatureLoading={isFeatureLoading}
+                />
             </div>
         </>
     );
