@@ -8,6 +8,7 @@ import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 import { useLoading } from "@/contexts/LoadingContext";
+import { setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
 
 const riskBreakPoint = {
     medium: 0.27,
@@ -50,6 +51,7 @@ export default function MapPage() {
     const [selectedFeature, setSelectedFeature] = useState<IGeoJSONFeature | null>(null);
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
+    const [clickedCoordinates, setClickedCoordinates] = useState<{ lon: number; lat: number } | null>(null);
     const { startLoading, stopLoading } = useLoading();
 
     // Initialize map only once
@@ -72,6 +74,13 @@ export default function MapPage() {
 
         map.current.on("load", () => {
             setIsMapLoaded(true);
+        });
+
+        // Add click event listener to get lat/lon from user click
+        map.current.on("click", (e) => {
+            const { lng, lat } = e.lngLat;
+            handleSelfSurway({ lat: lat, lon: lng });
+            console.log("Clicked coordinates:", { lng, lat });
         });
 
         return () => {
@@ -237,6 +246,33 @@ export default function MapPage() {
         setIsOpenDetailsDrawer(true);
     }
 
+    async function handleSelfSurway({ lat, lon }: { lat: number; lon: number }): Promise<void> {
+        setClickedCoordinates({ lon, lat });
+        try {
+            startLoading();
+            const response: AxiosResponse<{ lat: number; lon: number; risk: number }> = await axios.post(
+                "/api/dev/self-surway",
+                {
+                    lat: lat,
+                    lon: lon,
+                },
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            setSelfSurwayPoint({
+                lat: response.data.lat,
+                lon: response.data.lon,
+                risk: response.data.risk,
+            });
+        } catch (error) {
+            console.error("Error fetching surway points:", error);
+        } finally {
+            stopLoading();
+        }
+    }
+
     return (
         <>
             <div className="relative w-full bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
@@ -252,6 +288,10 @@ export default function MapPage() {
                         <div className="border-warning h-4 w-4 rounded-full bg-[#f97414] shadow-[0_0_20px_#f97414]" />
                         <span className="text-sm text-white">Medium Risk</span>
                     </div>
+                    <div className="mt-2 flex items-center gap-2">
+                        <div className="border-warning h-4 w-4 rounded-full bg-[#06b6d4] shadow-[0_0_20px_#06b6d4]" />
+                        <span className="text-sm text-white">Self Surway</span>
+                    </div>
 
                     <h3 className="mt-5 text-sm font-bold text-white">Last Update</h3>
                     <div className="flex flex-row items-center">
@@ -266,6 +306,7 @@ export default function MapPage() {
                         </div>
                     </div>
                 </div>
+
                 <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} selectedFeature={selectedFeature} />
             </div>
         </>
