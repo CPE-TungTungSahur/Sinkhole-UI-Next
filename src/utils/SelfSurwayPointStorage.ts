@@ -26,10 +26,6 @@ export function setSelfSurwayPoint({ lat, lon, risk }: ISelfSurwayPoint): void {
         ])
     );
 
-    const getAllPoint2: string = localStorage.getItem("selfSurwayPoint") as string;
-    const getAllPointParsed2: ISelfSurwayPoint[] = JSON.parse(getAllPoint);
-    console.log(getAllPointParsed2);
-
     return;
 }
 
@@ -76,6 +72,5 @@ export function deleteSelfSurwayPoint({ lat, lon }: { lat: number; lon: number }
 
 export function initSelfSurwayPoint(): void {
     const getAllPoint: string | null = localStorage.getItem("selfSurwayPoint");
-    console.log(getAllPoint);
     if (!getAllPoint) localStorage.setItem("selfSurwayPoint", JSON.stringify([]));
 }

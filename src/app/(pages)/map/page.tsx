@@ -9,6 +9,7 @@ import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 import { useLoading } from "@/contexts/LoadingContext";
 import { getAllSelfSurwayPoint, getSelfSurwayPoint, setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
+import { createMapAreaCircle } from "@/utils/createMapAreaCircle";
 
 const riskBreakPoint = {
     medium: 0.27,
@@ -26,6 +27,7 @@ export interface IGeoJSONFeature {
         line: string;
         color: string;
         point_type: string;
+        point_source: string;
     };
 }
 
@@ -114,30 +116,9 @@ export default function MapPage() {
         if (!map.current || !isMapLoaded || !geoJsonData) return;
 
         // Helper function to create circle GeoJSON
-        const createCircle = (center: [number, number], radiusInKm: number, points = 64) => {
-            const coords = {
-                latitude: center[1],
-                longitude: center[0],
-            };
-
-            const km = radiusInKm;
-            const ret = [];
-            const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180));
-            const distanceY = km / 110.574;
-
-            for (let i = 0; i < points; i++) {
-                const theta = (i / points) * (2 * Math.PI);
-                const x = distanceX * Math.cos(theta);
-                const y = distanceY * Math.sin(theta);
-                ret.push([coords.longitude + x, coords.latitude + y]);
-            }
-            ret.push(ret[0]);
-
-            return ret;
-        };
 
         // Filter features with risk >= 0.1
-        const filteredFeatures = geoJsonData.geojson.features.filter((feature) => feature.properties.risk >= riskBreakPoint.medium);
+        const filteredFeatures = geoJsonData.geojson.features.filter((feature) => feature.properties.risk >= riskBreakPoint.medium || feature.properties.point_source === "localstorage");
 
         // Create GeoJSON FeatureCollection for circles
         const circlesGeoJSON = {
@@ -146,7 +127,7 @@ export default function MapPage() {
                 type: "Feature" as const,
                 geometry: {
                     type: "Polygon" as const,
-                    coordinates: [createCircle(feature.geometry.coordinates, 0.3)],
+                    coordinates: [createMapAreaCircle(feature.geometry.coordinates, 0.2)],
                 },
                 properties: {
                     risk: feature.properties.risk,
@@ -213,16 +194,27 @@ export default function MapPage() {
 
             const risk = feature.properties.risk;
 
-            if (risk > riskBreakPoint.high) {
+            // middle point selector
+            if (feature.properties.point_source === "localstorage") {
+                el.style.backgroundColor = "hsl(189 94% 43%)";
+            } else if (risk > riskBreakPoint.high) {
                 // Should be greater than 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(0 84% 60%)";
-                el.style.borderColor = "hsl(0 84% 70%)";
-                el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
             } else if (risk > riskBreakPoint.medium) {
                 // Should be between 0.5 and 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(25 95% 53%)";
+            }
+
+            // border & shadow selector
+            if (risk > riskBreakPoint.high) {
+                el.style.borderColor = "hsl(0 84% 70%)";
+                el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
+            } else if (risk > riskBreakPoint.medium) {
                 el.style.borderColor = "hsl(25 95% 63%)";
                 el.style.boxShadow = "0 0 20px hsl(25 95% 53% / 0.6)";
+            } else {
+                el.style.borderColor = "hsl(189 94% 53%)";
+                el.style.boxShadow = "0 0 20px hsl(189 94% 43% / 0.6)";
             }
 
             const marker = new mapboxgl.Marker(el).setLngLat(feature.geometry.coordinates).addTo(map.current!);
@@ -248,9 +240,22 @@ export default function MapPage() {
                     }
                 );
 
-                // console.log("GeoJSON Response:", response.data);
+                const mapGeoJsonPointServer: IGeoJSONResponse = {
+                    ...response.data,
+                    geojson: {
+                        ...response.data.geojson,
+                        features: response.data.geojson.features.map((feature) => ({
+                            ...feature,
+                            properties: {
+                                ...feature.properties,
+                                point_source: "server",
+                            },
+                        })),
+                    },
+                };
+
                 const getSelfSurwayPointLocalData = getAllSelfSurwayPoint();
-                const mapGeoJson: IGeoJSONFeature[] = getSelfSurwayPointLocalData.map((p) => ({
+                const mapGeoJsonSelfSurwayPointLocalData: IGeoJSONFeature[] = getSelfSurwayPointLocalData.map((p) => ({
                     type: "Feature",
                     geometry: {
                         type: "Point",
@@ -261,15 +266,15 @@ export default function MapPage() {
                         line: "",
                         color: "",
                         point_type: "",
+                        point_source: "localstorage",
                     },
                 }));
-                console.log(response.data);
 
                 setGeoJsonData({
-                    ...response.data,
+                    ...mapGeoJsonPointServer,
                     geojson: {
                         type: "FeatureCollection",
-                        features: [...mapGeoJson, ...response.data.geojson.features],
+                        features: [...mapGeoJsonSelfSurwayPointLocalData, ...mapGeoJsonPointServer.geojson.features],
                     },
                 });
             } catch (error) {
@@ -330,10 +335,10 @@ export default function MapPage() {
                         <div className="border-warning h-4 w-4 rounded-full bg-[#f97414] shadow-[0_0_20px_#f97414]" />
                         <span className="text-sm text-white">Medium Risk</span>
                     </div>
-                    {/* <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-2 flex items-center gap-2">
                         <div className="border-warning h-4 w-4 rounded-full bg-[#06b6d4] shadow-[0_0_20px_#06b6d4]" />
                         <span className="text-sm text-white">Self Surway</span>
-                    </div> */}
+                    </div>
 
                     <h3 className="mt-5 text-sm font-bold text-white">Last Update</h3>
                     <div className="flex flex-row items-center">
