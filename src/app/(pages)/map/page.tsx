@@ -96,11 +96,25 @@ export default function MapPage() {
             setIsMapLoaded(true);
         });
 
-        // Add click event listener to get lat/lon from user click
-        map.current.on("click", (e) => {
+        // Add right-click/holdscreen event listener to get lat/lon from user click
+        map.current.on("contextmenu", (e) => {
+            // right click
             const { lng, lat } = e.lngLat;
             handleSelfSurway({ lat: lat, lon: lng });
             console.log("Clicked coordinates:", { lng, lat });
+        });
+        let pressTimer: NodeJS.Timeout;
+        map.current.on("touchstart", (e) => {
+            pressTimer = setTimeout(() => {
+                const { lng, lat } = e.lngLat;
+                console.log("Clicked coordinates:", { lng, lat });
+            }, 1000); // 1.5s
+        });
+        map.current.on("touchend", () => {
+            clearTimeout(pressTimer);
+        });
+        map.current.on("touchmove", () => {
+            clearTimeout(pressTimer); // cancle timeout when drag screen
         });
 
         return () => {
