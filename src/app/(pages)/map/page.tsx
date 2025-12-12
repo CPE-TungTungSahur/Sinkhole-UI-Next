@@ -8,7 +8,7 @@ import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 import { useLoading } from "@/contexts/LoadingContext";
-import { setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
+import { getAllSelfSurwayPoint, getSelfSurwayPoint, setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
 
 const riskBreakPoint = {
     medium: 0.27,
@@ -53,6 +53,7 @@ export default function MapPage() {
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
     const [clickedCoordinates, setClickedCoordinates] = useState<{ lon: number; lat: number } | null>(null);
     const { startLoading, stopLoading } = useLoading();
+    const [reFetchTrigger, setReFetchTrigger] = useState<number>(0);
 
     // Initialize map only once
     useEffect(() => {
@@ -231,14 +232,36 @@ export default function MapPage() {
                 );
 
                 // console.log("GeoJSON Response:", response.data);
-                setGeoJsonData(response.data);
+                const getSelfSurwayPointLocalData = getAllSelfSurwayPoint();
+                const mapGeoJson: IGeoJSONFeature[] = getSelfSurwayPointLocalData.map((p) => ({
+                    type: "Feature",
+                    geometry: {
+                        type: "Point",
+                        coordinates: [p.lon, p.lat], // [longitude, latitude]
+                    },
+                    properties: {
+                        risk: p.risk,
+                        line: "",
+                        color: "",
+                        point_type: "",
+                    },
+                }));
+                console.log(response.data);
+
+                setGeoJsonData({
+                    ...response.data,
+                    geojson: {
+                        type: "FeatureCollection",
+                        features: [...mapGeoJson, ...response.data.geojson.features],
+                    },
+                });
             } catch (error) {
                 console.error("Error fetching predicted points:", error);
             } finally {
                 stopLoading();
             }
         })();
-    }, [startLoading, stopLoading]);
+    }, [startLoading, stopLoading, reFetchTrigger]);
 
     function handleFeatureClick(feature: IGeoJSONFeature): void {
         console.log("Marker clicked:", feature.geometry.coordinates.join(", "));
@@ -250,22 +273,23 @@ export default function MapPage() {
         setClickedCoordinates({ lon, lat });
         try {
             startLoading();
-            const response: AxiosResponse<{ lat: number; lon: number; risk: number }> = await axios.post(
-                "/api/dev/self-surway",
-                {
-                    lat: lat,
-                    lon: lon,
-                },
-                {
-                    headers: { "Content-Type": "application/json" },
-                }
-            );
+            // const response: AxiosResponse<{ lat: number; lon: number; risk: number }> = await axios.post(
+            //     "/api/dev/self-surway",
+            //     {
+            //         lat: lat,
+            //         lon: lon,
+            //     },
+            //     {
+            //         headers: { "Content-Type": "application/json" },
+            //     }
+            // );
 
             setSelfSurwayPoint({
-                lat: response.data.lat,
-                lon: response.data.lon,
-                risk: response.data.risk,
+                lat: lat,
+                lon: lon,
+                risk: 0.5,
             });
+            setReFetchTrigger(Math.random());
         } catch (error) {
             console.error("Error fetching surway points:", error);
         } finally {
@@ -288,10 +312,10 @@ export default function MapPage() {
                         <div className="border-warning h-4 w-4 rounded-full bg-[#f97414] shadow-[0_0_20px_#f97414]" />
                         <span className="text-sm text-white">Medium Risk</span>
                     </div>
-                    <div className="mt-2 flex items-center gap-2">
+                    {/* <div className="mt-2 flex items-center gap-2">
                         <div className="border-warning h-4 w-4 rounded-full bg-[#06b6d4] shadow-[0_0_20px_#06b6d4]" />
                         <span className="text-sm text-white">Self Surway</span>
-                    </div>
+                    </div> */}
 
                     <h3 className="mt-5 text-sm font-bold text-white">Last Update</h3>
                     <div className="flex flex-row items-center">
