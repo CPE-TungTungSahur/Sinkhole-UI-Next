@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { config } from "@/config/config";
 
-const BACKEND_URL = `${config.api.backendUrl}/predict-point`;
-
 export async function POST(req: Request) {
     try {
         const body = await req.json();
@@ -14,14 +12,11 @@ export async function POST(req: Request) {
         }
 
         // ส่งต่อไป backend FastAPI
-        const res = await fetch(`${BACKEND_URL}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                lat,
-                lon,
-                date: date,
-            }),
+        const res = await fetch(`${config.api.backendUrl}/predict-point?` + new URLSearchParams({ lat: lat, lon: lon, date: date }).toString(), {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
         });
 
         if (!res.ok) {

@@ -37,6 +37,23 @@ export interface IGeoJSONResponse {
     };
 }
 
+export interface ISelfSurwayResponse {
+    status: string;
+    feature: {
+        type: string;
+        geometry: {
+            type: string;
+            coordinates: [number, number]; // [longitude, latitude]
+        };
+        properties: {
+            lat: number;
+            lon: number;
+            date: string;
+            risk: number;
+        };
+    };
+}
+
 function getRiskColor(prob: number) {
     if (prob > riskBreakPoint.high) return "#ef4444"; // High
     if (prob > riskBreakPoint.medium) return "#f97316"; // Medium
@@ -273,25 +290,26 @@ export default function MapPage() {
         setClickedCoordinates({ lon, lat });
         try {
             startLoading();
-            // const response: AxiosResponse<{ lat: number; lon: number; risk: number }> = await axios.post(
-            //     "/api/dev/self-surway",
-            //     {
-            //         lat: lat,
-            //         lon: lon,
-            //     },
-            //     {
-            //         headers: { "Content-Type": "application/json" },
-            //     }
-            // );
+            const response: AxiosResponse<ISelfSurwayResponse> = await axios.post(
+                "/api/dev/predict-random-point",
+                {
+                    lat: lat,
+                    lon: lon,
+                    date: new Date().toLocaleDateString("pt-PT").split("/").reverse().join("-"), // YYYY-MM-DD
+                },
+                {
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
 
             setSelfSurwayPoint({
-                lat: lat,
-                lon: lon,
-                risk: 0.5,
+                lat: response.data.feature.properties.lat,
+                lon: response.data.feature.properties.lon,
+                risk: response.data.feature.properties.risk,
             });
             setReFetchTrigger(Math.random());
         } catch (error) {
-            console.error("Error fetching surway points:", error);
+            console.dir("Error fetching surway points:", error);
         } finally {
             stopLoading();
         }
