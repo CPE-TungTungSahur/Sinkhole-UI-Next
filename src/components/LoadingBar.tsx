@@ -67,7 +67,7 @@ export default function LoadingBar(): React.JSX.Element | null {
     return (
         <div className="fixed left-0 top-0 z-40 w-full">
             <div className="h-1 shadow-lg backdrop-blur-2xl">
-                <div className="h-1 bg-cyan-400 transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
+                <div className="h-1 rounded-xl bg-cyan-400 shadow-[0_0_50px_#06b6d4] transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
             </div>
         </div>
     );
