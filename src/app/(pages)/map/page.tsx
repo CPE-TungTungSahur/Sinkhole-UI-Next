@@ -406,7 +406,7 @@ export default function MapPage() {
 
     return (
         <>
-            <div className="relative w-full overflow-hidden bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
+            <div className="relative w-full overflow-y-hidden bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
                 <Dropdown
                     popupRender={popMenu}
                     trigger={["contextMenu"]}
