@@ -10,7 +10,7 @@ import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 import { useLoading } from "@/contexts/LoadingContext";
 import { getAllSelfSurwayPoint, getSelfSurwayPoint, setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
 import { createMapAreaCircle } from "@/utils/createMapAreaCircle";
-import { Dropdown, MenuProps, theme } from "antd";
+import { Dropdown, MenuProps, Spin, theme } from "antd";
 
 const riskBreakPoint = {
     medium: 0.27,
@@ -72,7 +72,8 @@ export default function MapPage() {
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
     const [interestCoordinates, setInterestCoordinates] = useState<{ lon: number; lat: number } | null>(null);
-    const { startLoading, stopLoading } = useLoading();
+    const [isOpenInterestCoordinatesContextMenu, setIsOpenInterestCoordinatesContextMenu] = useState<boolean>(false);
+    const { startLoading, stopLoading, isLoading } = useLoading();
     const [reFetchTrigger, setReFetchTrigger] = useState<number>(0);
 
     // Initialize map only once
@@ -97,39 +98,33 @@ export default function MapPage() {
             setIsMapLoaded(true);
         });
 
+        // Add right-click/holdscreen event listener to get lat/lon from user click
         map.current.on("contextmenu", (e) => {
             const { lng, lat } = e.lngLat;
             setInterestCoordinates({ lon: lng, lat: lat });
+            setIsOpenInterestCoordinatesContextMenu(true);
             // handleSelfSurway({ lat: lat, lon: lng });
             console.log("Clicked coordinates:", { lng, lat });
         });
-
-        map.current.on("touchstart", (e) => {
-            const { lng, lat } = e.lngLat;
-            setInterestCoordinates({ lon: lng, lat: lat });
-            console.log("Clicked coordinates:", { lng, lat });
+        map.current.on("click", (e) => {
+            setIsOpenInterestCoordinatesContextMenu(false);
         });
-
-        // Add right-click/holdscreen event listener to get lat/lon from user click
-        // map.current.on("contextmenu", (e) => {
-        //     // right click
-        //     const { lng, lat } = e.lngLat;
-        //     handleSelfSurway({ lat: lat, lon: lng });
-        //     console.log("Clicked coordinates:", { lng, lat });
-        // });
-        // let pressTimer: NodeJS.Timeout;
-        // map.current.on("touchstart", (e) => {
-        //     pressTimer = setTimeout(() => {
-        //         const { lng, lat } = e.lngLat;
-        //         console.log("Clicked coordinates:", { lng, lat });
-        //     }, 1000); // 1.5s
-        // });
-        // map.current.on("touchend", () => {
-        //     clearTimeout(pressTimer);
-        // });
-        // map.current.on("touchmove", () => {
-        //     clearTimeout(pressTimer); // cancle timeout when drag screen
-        // });
+        let pressTimer: NodeJS.Timeout;
+        map.current.on("touchstart", (e) => {
+            setIsOpenInterestCoordinatesContextMenu(false);
+            pressTimer = setTimeout(() => {
+                const { lng, lat } = e.lngLat;
+                setInterestCoordinates({ lon: lng, lat: lat });
+                setIsOpenInterestCoordinatesContextMenu(true);
+                console.log("Clicked coordinates:", { lng, lat });
+            }, 1000); // 1.0s
+        });
+        map.current.on("touchend", () => {
+            clearTimeout(pressTimer);
+        });
+        map.current.on("touchmove", () => {
+            clearTimeout(pressTimer); // cancle timeout when drag screen
+        });
 
         return () => {
             if (map.current) {
@@ -359,24 +354,38 @@ export default function MapPage() {
 
     function popMenu(): React.ReactNode {
         return (
-            <div className="flex w-56 flex-col items-center rounded-lg bg-[#0000]/70 px-4 pb-4 pt-2 backdrop-blur-sm">
-                <div className="text-center font-bold text-white">Predict this location</div>
-                <div className="mt-3 flex flex-row gap-x-3">
-                    <div className="flex flex-col">
-                        <div className="text-sm font-bold text-white">Latitude</div>
-                        <div className="mt-1 text-sm font-bold text-white">Longitude</div>
+            <div className="h-[150px] w-56 rounded-lg bg-[#0000]/70 px-4 pb-4 pt-2 backdrop-blur-sm">
+                {isLoading ? (
+                    <div className="flex flex-col items-center">
+                        <div className="text-center font-bold text-white">Predict Location</div>
+                        <div className="mt-3 flex flex-row gap-x-3">
+                            <div className="flex flex-col">
+                                <div className="text-sm font-bold text-white">Latitude</div>
+                                <div className="mt-1 text-sm font-bold text-white">Longitude</div>
+                            </div>
+                            <div className="w-fit">
+                                <div className="h-full w-[2px] rounded-lg bg-white"></div>
+                            </div>
+                            <div className="flex flex-col">
+                                <div className="text-wrap text-sm font-bold text-cyan-400">{interestCoordinates?.lat.toFixed(5)}</div>
+                                <div className="mt-1 text-sm font-bold text-cyan-400">{interestCoordinates?.lon.toFixed(5)}</div>
+                            </div>
+                        </div>
+                        <div className="hover text-md mt-5 w-full cursor-pointer rounded-md bg-cyan-400 py-1 text-center font-bold text-white shadow-[0_0_10px_#06b6d4] duration-300 hover:bg-cyan-600 active:scale-95">
+                            Predict
+                        </div>
                     </div>
-                    <div className="w-fit">
-                        <div className="h-full w-[2px] rounded-lg bg-white"></div>
+                ) : (
+                    <div className="flex h-full flex-col items-center">
+                        <div className="flex grow flex-col justify-center">
+                            <Spin size="large" styles={{ indicator: { color: "#22d3ee" } }} />
+                            <div className="mt-4 text-xs text-white">Predicking. Please wait...</div>
+                        </div>
+                        <div className="hover text-md mt-2 w-full cursor-pointer rounded-md bg-slate-400/20 py-1 text-center font-bold text-white duration-300 hover:bg-white/70 hover:text-black active:scale-95">
+                            Cancel
+                        </div>
                     </div>
-                    <div className="flex flex-col">
-                        <div className="text-wrap text-sm font-bold text-cyan-400">{interestCoordinates?.lat.toFixed(5)}</div>
-                        <div className="mt-1 text-sm font-bold text-cyan-400">{interestCoordinates?.lon.toFixed(5)}</div>
-                    </div>
-                </div>
-                <div className="hover text-md mt-5 w-full cursor-pointer rounded-md bg-cyan-400 py-1 text-center font-bold text-white shadow-[0_0_10px_#06b6d4] duration-300 hover:bg-cyan-300 active:scale-[.98]">
-                    Predict
-                </div>
+                )}
             </div>
         );
     }
@@ -384,7 +393,13 @@ export default function MapPage() {
     return (
         <>
             <div className="relative w-full overflow-hidden bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
-                <Dropdown popupRender={popMenu} trigger={["contextMenu"]} className="absolute" onOpenChange={(isOpen, { source }) => (isOpen ? lockMap() : unlockMap())}>
+                <Dropdown
+                    popupRender={popMenu}
+                    trigger={["contextMenu"]}
+                    open={isOpenInterestCoordinatesContextMenu}
+                    className="absolute"
+                    onOpenChange={(isOpen, { source }) => console.log(isOpen ? lockMap() : unlockMap())}
+                >
                     <div ref={mapContainer} className="inset-0 min-h-screen"></div>
                 </Dropdown>
                 {/* Legend */}
