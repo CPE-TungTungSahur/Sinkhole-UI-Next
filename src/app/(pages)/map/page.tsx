@@ -75,6 +75,7 @@ export default function MapPage() {
     const [isOpenInterestCoordinatesContextMenu, setIsOpenInterestCoordinatesContextMenu] = useState<boolean>(false);
     const { startLoading, stopLoading, isLoading } = useLoading();
     const [reFetchTrigger, setReFetchTrigger] = useState<number>(0);
+    const selfSurwayControllerRef = useRef<AbortController | null>(null);
 
     // Initialize map only once
     useEffect(() => {
@@ -315,6 +316,7 @@ export default function MapPage() {
     }
 
     async function handleSelfSurway({ lat, lon }: { lat: number; lon: number }): Promise<void> {
+        selfSurwayControllerRef.current = new AbortController();
         try {
             startLoading();
             const response: AxiosResponse<ISelfSurwayResponse> = await axios.post(
@@ -326,6 +328,7 @@ export default function MapPage() {
                 },
                 {
                     headers: { "Content-Type": "application/json" },
+                    signal: selfSurwayControllerRef.current.signal,
                 }
             );
 
@@ -334,9 +337,13 @@ export default function MapPage() {
                 lon: response.data.feature.properties.lon,
                 risk: response.data.feature.properties.risk,
             });
-            // setReFetchTrigger(Math.random());
+            setReFetchTrigger(Math.random());
         } catch (error) {
-            console.dir("Error fetching surway points:", error);
+            if (axios.isCancel(error)) {
+                console.log("Request canceled:", error.message);
+            } else {
+                console.dir("Error fetching surway points:", error);
+            }
         } finally {
             stopLoading();
         }
@@ -355,7 +362,7 @@ export default function MapPage() {
     function popMenu(): React.ReactNode {
         return (
             <div className="h-[150px] w-56 rounded-lg bg-[#0000]/70 px-4 pb-4 pt-2 backdrop-blur-sm">
-                {isLoading ? (
+                {!isLoading ? (
                     <div className="flex flex-col items-center">
                         <div className="text-center font-bold text-white">Predict Location</div>
                         <div className="mt-3 flex flex-row gap-x-3">
@@ -371,7 +378,10 @@ export default function MapPage() {
                                 <div className="mt-1 text-sm font-bold text-cyan-400">{interestCoordinates?.lon.toFixed(5)}</div>
                             </div>
                         </div>
-                        <div className="hover text-md mt-5 w-full cursor-pointer rounded-md bg-cyan-400 py-1 text-center font-bold text-white shadow-[0_0_10px_#06b6d4] duration-300 hover:bg-cyan-600 active:scale-95">
+                        <div
+                            className="hover text-md mt-5 w-full cursor-pointer rounded-md bg-cyan-400 py-1 text-center font-bold text-white shadow-[0_0_10px_#06b6d4] duration-300 hover:bg-cyan-600 active:scale-95"
+                            onClick={() => (interestCoordinates ? handleSelfSurway({ lat: interestCoordinates.lat, lon: interestCoordinates.lon }) : null)}
+                        >
                             Predict
                         </div>
                     </div>
@@ -379,9 +389,12 @@ export default function MapPage() {
                     <div className="flex h-full flex-col items-center">
                         <div className="flex grow flex-col justify-center">
                             <Spin size="large" styles={{ indicator: { color: "#22d3ee" } }} />
-                            <div className="mt-4 text-xs text-white">Predicking. Please wait...</div>
+                            <div className="mt-4 text-xs text-white">Loading. Please wait...</div>
                         </div>
-                        <div className="hover text-md mt-2 w-full cursor-pointer rounded-md bg-slate-400/20 py-1 text-center font-bold text-white duration-300 hover:bg-white/70 hover:text-black active:scale-95">
+                        <div
+                            className="hover text-md mt-2 w-full cursor-pointer rounded-md bg-slate-400/20 py-1 text-center font-bold text-white duration-300 hover:bg-white/70 hover:text-black active:scale-95"
+                            onClick={() => selfSurwayControllerRef.current?.abort()}
+                        >
                             Cancel
                         </div>
                     </div>
@@ -434,7 +447,6 @@ export default function MapPage() {
 
                 <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} selectedFeature={selectedFeature} />
             </div>
-            {/* </Dropdown> */}
         </>
     );
 }
