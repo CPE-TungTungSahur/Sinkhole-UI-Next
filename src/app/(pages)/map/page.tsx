@@ -350,6 +350,11 @@ export default function MapPage() {
         }
     }
 
+    useEffect(() => {
+        if (!isOpenInterestCoordinatesContextMenu) unlockMap();
+        else lockMap();
+    }, [isOpenInterestCoordinatesContextMenu]);
+
     function lockMap() {
         map.current?.dragPan.disable();
         map.current?.scrollZoom.disable();
@@ -412,7 +417,7 @@ export default function MapPage() {
                     trigger={["contextMenu"]}
                     open={isOpenInterestCoordinatesContextMenu}
                     className="absolute"
-                    onOpenChange={(isOpen, { source }) => console.log(isOpen ? lockMap() : unlockMap())}
+                    onOpenChange={(isOpen, { source }) => console.log(isOpen, source)}
                 >
                     <div ref={mapContainer} className="inset-0 min-h-screen"></div>
                 </Dropdown>
