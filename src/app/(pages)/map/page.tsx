@@ -346,6 +346,7 @@ export default function MapPage() {
             }
         } finally {
             stopLoading();
+            setIsOpenInterestCoordinatesContextMenu(false);
         }
     }
 
