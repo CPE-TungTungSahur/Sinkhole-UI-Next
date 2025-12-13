@@ -3,11 +3,14 @@
 import Image from "next/image";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 import { useLoading } from "@/contexts/LoadingContext";
+import { getAllSelfSurwayPoint, getSelfSurwayPoint, setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
+import { createMapAreaCircle } from "@/utils/createMapAreaCircle";
+import { Dropdown, MenuProps, Spin, theme } from "antd";
 
 const riskBreakPoint = {
     medium: 0.27,
@@ -25,6 +28,7 @@ export interface IGeoJSONFeature {
         line: string;
         color: string;
         point_type: string;
+        point_source: string;
     };
 }
 
@@ -33,6 +37,23 @@ export interface IGeoJSONResponse {
     geojson: {
         type: "FeatureCollection";
         features: IGeoJSONFeature[];
+    };
+}
+
+export interface ISelfSurwayResponse {
+    status: string;
+    feature: {
+        type: string;
+        geometry: {
+            type: string;
+            coordinates: [number, number]; // [longitude, latitude]
+        };
+        properties: {
+            lat: number;
+            lon: number;
+            date: string;
+            risk: number;
+        };
     };
 }
 
@@ -50,7 +71,11 @@ export default function MapPage() {
     const [selectedFeature, setSelectedFeature] = useState<IGeoJSONFeature | null>(null);
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
-    const { startLoading, stopLoading } = useLoading();
+    const [interestCoordinates, setInterestCoordinates] = useState<{ lon: number; lat: number } | null>(null);
+    const [isOpenInterestCoordinatesContextMenu, setIsOpenInterestCoordinatesContextMenu] = useState<boolean>(false);
+    const { startLoading, stopLoading, isLoading } = useLoading();
+    const [reFetchTrigger, setReFetchTrigger] = useState<number>(0);
+    const selfSurwayControllerRef = useRef<AbortController | null>(null);
 
     // Initialize map only once
     useEffect(() => {
@@ -74,6 +99,34 @@ export default function MapPage() {
             setIsMapLoaded(true);
         });
 
+        // Add right-click/holdscreen event listener to get lat/lon from user click
+        map.current.on("contextmenu", (e) => {
+            const { lng, lat } = e.lngLat;
+            setInterestCoordinates({ lon: lng, lat: lat });
+            setIsOpenInterestCoordinatesContextMenu(true);
+            // handleSelfSurway({ lat: lat, lon: lng });
+            console.log("Clicked coordinates:", { lng, lat });
+        });
+        map.current.on("click", (e) => {
+            setIsOpenInterestCoordinatesContextMenu(false);
+        });
+        let pressTimer: NodeJS.Timeout;
+        map.current.on("touchstart", (e) => {
+            setIsOpenInterestCoordinatesContextMenu(false);
+            pressTimer = setTimeout(() => {
+                const { lng, lat } = e.lngLat;
+                setInterestCoordinates({ lon: lng, lat: lat });
+                setIsOpenInterestCoordinatesContextMenu(true);
+                console.log("Clicked coordinates:", { lng, lat });
+            }, 1000); // 1.0s
+        });
+        map.current.on("touchend", () => {
+            clearTimeout(pressTimer);
+        });
+        map.current.on("touchmove", () => {
+            clearTimeout(pressTimer); // cancle timeout when drag screen
+        });
+
         return () => {
             if (map.current) {
                 map.current.remove();
@@ -87,30 +140,9 @@ export default function MapPage() {
         if (!map.current || !isMapLoaded || !geoJsonData) return;
 
         // Helper function to create circle GeoJSON
-        const createCircle = (center: [number, number], radiusInKm: number, points = 64) => {
-            const coords = {
-                latitude: center[1],
-                longitude: center[0],
-            };
-
-            const km = radiusInKm;
-            const ret = [];
-            const distanceX = km / (111.32 * Math.cos((coords.latitude * Math.PI) / 180));
-            const distanceY = km / 110.574;
-
-            for (let i = 0; i < points; i++) {
-                const theta = (i / points) * (2 * Math.PI);
-                const x = distanceX * Math.cos(theta);
-                const y = distanceY * Math.sin(theta);
-                ret.push([coords.longitude + x, coords.latitude + y]);
-            }
-            ret.push(ret[0]);
-
-            return ret;
-        };
 
         // Filter features with risk >= 0.1
-        const filteredFeatures = geoJsonData.geojson.features.filter((feature) => feature.properties.risk >= riskBreakPoint.medium);
+        const filteredFeatures = geoJsonData.geojson.features.filter((feature) => feature.properties.risk >= riskBreakPoint.medium || feature.properties.point_source === "localstorage");
 
         // Create GeoJSON FeatureCollection for circles
         const circlesGeoJSON = {
@@ -119,7 +151,7 @@ export default function MapPage() {
                 type: "Feature" as const,
                 geometry: {
                     type: "Polygon" as const,
-                    coordinates: [createCircle(feature.geometry.coordinates, 0.3)],
+                    coordinates: [createMapAreaCircle(feature.geometry.coordinates, 0.2)],
                 },
                 properties: {
                     risk: feature.properties.risk,
@@ -186,16 +218,27 @@ export default function MapPage() {
 
             const risk = feature.properties.risk;
 
-            if (risk > riskBreakPoint.high) {
+            // middle point selector
+            if (feature.properties.point_source === "localstorage") {
+                el.style.backgroundColor = "hsl(189 94% 43%)";
+            } else if (risk > riskBreakPoint.high) {
                 // Should be greater than 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(0 84% 60%)";
-                el.style.borderColor = "hsl(0 84% 70%)";
-                el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
             } else if (risk > riskBreakPoint.medium) {
                 // Should be between 0.5 and 0.716 but this is for testing
                 el.style.backgroundColor = "hsl(25 95% 53%)";
+            }
+
+            // border & shadow selector
+            if (risk > riskBreakPoint.high) {
+                el.style.borderColor = "hsl(0 84% 70%)";
+                el.style.boxShadow = "0 0 20px hsl(0 84% 60% / 0.6)";
+            } else if (risk > riskBreakPoint.medium) {
                 el.style.borderColor = "hsl(25 95% 63%)";
                 el.style.boxShadow = "0 0 20px hsl(25 95% 53% / 0.6)";
+            } else {
+                el.style.borderColor = "hsl(189 94% 53%)";
+                el.style.boxShadow = "0 0 20px hsl(189 94% 43% / 0.6)";
             }
 
             const marker = new mapboxgl.Marker(el).setLngLat(feature.geometry.coordinates).addTo(map.current!);
@@ -221,15 +264,50 @@ export default function MapPage() {
                     }
                 );
 
-                // console.log("GeoJSON Response:", response.data);
-                setGeoJsonData(response.data);
+                const mapGeoJsonPointServer: IGeoJSONResponse = {
+                    ...response.data,
+                    geojson: {
+                        ...response.data.geojson,
+                        features: response.data.geojson.features.map((feature) => ({
+                            ...feature,
+                            properties: {
+                                ...feature.properties,
+                                point_source: "server",
+                            },
+                        })),
+                    },
+                };
+
+                const getSelfSurwayPointLocalData = getAllSelfSurwayPoint();
+                const mapGeoJsonSelfSurwayPointLocalData: IGeoJSONFeature[] = getSelfSurwayPointLocalData.map((p) => ({
+                    type: "Feature",
+                    geometry: {
+                        type: "Point",
+                        coordinates: [p.lon, p.lat], // [longitude, latitude]
+                    },
+                    properties: {
+                        risk: p.risk,
+                        line: "",
+                        color: "",
+                        point_type: "",
+                        point_source: "localstorage",
+                    },
+                }));
+
+                setGeoJsonData({
+                    ...mapGeoJsonPointServer,
+                    geojson: {
+                        type: "FeatureCollection",
+                        features: [...mapGeoJsonSelfSurwayPointLocalData, ...mapGeoJsonPointServer.geojson.features],
+                    },
+                });
             } catch (error) {
                 console.error("Error fetching predicted points:", error);
             } finally {
                 stopLoading();
             }
         })();
-    }, [startLoading, stopLoading]);
+    }, [startLoading, stopLoading, reFetchTrigger]);
 
     function handleFeatureClick(feature: IGeoJSONFeature): void {
         console.log("Marker clicked:", feature.geometry.coordinates.join(", "));
@@ -237,12 +315,109 @@ export default function MapPage() {
         setIsOpenDetailsDrawer(true);
     }
 
+    async function handleSelfSurway({ lat, lon }: { lat: number; lon: number }): Promise<void> {
+        selfSurwayControllerRef.current = new AbortController();
+        try {
+            startLoading();
+            const response: AxiosResponse<ISelfSurwayResponse> = await axios.post(
+                "/api/dev/predict-random-point",
+                {
+                    lat: lat,
+                    lon: lon,
+                    date: new Date().toLocaleDateString("pt-PT").split("/").reverse().join("-"), // YYYY-MM-DD
+                },
+                {
+                    headers: { "Content-Type": "application/json" },
+                    signal: selfSurwayControllerRef.current.signal,
+                }
+            );
+
+            setSelfSurwayPoint({
+                lat: response.data.feature.properties.lat,
+                lon: response.data.feature.properties.lon,
+                risk: response.data.feature.properties.risk,
+            });
+            setReFetchTrigger(Math.random());
+        } catch (error) {
+            if (axios.isCancel(error)) {
+                console.log("Request canceled:", error.message);
+            } else {
+                console.dir("Error fetching surway points:", error);
+            }
+        } finally {
+            stopLoading();
+            setIsOpenInterestCoordinatesContextMenu(false);
+        }
+    }
+
+    function lockMap() {
+        map.current?.dragPan.disable();
+        map.current?.scrollZoom.disable();
+    }
+
+    function unlockMap() {
+        map.current?.dragPan.enable();
+        map.current?.scrollZoom.enable();
+    }
+
+    function popMenu(): React.ReactNode {
+        return (
+            <div className="h-[150px] w-56 rounded-lg bg-[#0000]/70 px-4 pb-4 pt-2 backdrop-blur-sm">
+                {!isLoading ? (
+                    <div className="flex flex-col items-center">
+                        <div className="text-center font-bold text-white">Predict Location</div>
+                        <div className="mt-3 flex flex-row gap-x-3">
+                            <div className="flex flex-col">
+                                <div className="text-sm font-bold text-white">Latitude</div>
+                                <div className="mt-1 text-sm font-bold text-white">Longitude</div>
+                            </div>
+                            <div className="w-fit">
+                                <div className="h-full w-[2px] rounded-lg bg-white"></div>
+                            </div>
+                            <div className="flex flex-col">
+                                <div className="text-wrap text-sm font-bold text-cyan-400">{interestCoordinates?.lat.toFixed(5)}</div>
+                                <div className="mt-1 text-sm font-bold text-cyan-400">{interestCoordinates?.lon.toFixed(5)}</div>
+                            </div>
+                        </div>
+                        <div
+                            className="hover text-md mt-5 w-full cursor-pointer rounded-md bg-cyan-400 py-1 text-center font-bold text-white shadow-[0_0_10px_#06b6d4] duration-300 hover:bg-cyan-600 active:scale-95"
+                            onClick={() => (interestCoordinates ? handleSelfSurway({ lat: interestCoordinates.lat, lon: interestCoordinates.lon }) : null)}
+                        >
+                            Predict
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex h-full flex-col items-center">
+                        <div className="flex grow flex-col justify-center">
+                            <Spin size="large" styles={{ indicator: { color: "#22d3ee" } }} />
+                            <div className="mt-4 text-xs text-white">Loading. Please wait...</div>
+                        </div>
+                        <div
+                            className="hover text-md mt-2 w-full cursor-pointer rounded-md bg-slate-400/20 py-1 text-center font-bold text-white duration-300 hover:bg-white/70 hover:text-black active:scale-95"
+                            onClick={() => selfSurwayControllerRef.current?.abort()}
+                        >
+                            Cancel
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
         <>
-            <div className="relative w-full bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
-                <div ref={mapContainer} className="absolute inset-0 min-h-screen" />
+            <div className="relative w-full overflow-y-hidden bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
+                <Dropdown
+                    popupRender={popMenu}
+                    trigger={["contextMenu"]}
+                    open={isOpenInterestCoordinatesContextMenu}
+                    className="absolute"
+                    onOpenChange={(isOpen, { source }) => console.log(isOpen ? lockMap() : unlockMap())}
+                >
+                    <div ref={mapContainer} className="inset-0 min-h-screen"></div>
+                </Dropdown>
                 {/* Legend */}
-                <div className="bg-card/90 border-border absolute bottom-8 left-8 rounded-lg bg-[#0000]/50 p-4 backdrop-blur-sm md:bottom-[25rem]">
+                <div className="bg-card/90 border-border absolute bottom-8 left-8 z-50 rounded-lg bg-[#0000]/50 p-4 backdrop-blur-sm md:bottom-[25rem]">
                     <h3 className="mb-3 text-sm font-bold text-white">Risk Levels</h3>
                     <div className="flex items-center gap-2">
                         <div className="border-danger h-4 w-4 rounded-full bg-[#ef4443] shadow-[0_0_20px_#ef4443]" />
@@ -251,6 +426,10 @@ export default function MapPage() {
                     <div className="mt-2 flex items-center gap-2">
                         <div className="border-warning h-4 w-4 rounded-full bg-[#f97414] shadow-[0_0_20px_#f97414]" />
                         <span className="text-sm text-white">Medium Risk</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                        <div className="border-warning h-4 w-4 rounded-full bg-[#06b6d4] shadow-[0_0_20px_#06b6d4]" />
+                        <span className="text-sm text-white">Self Surway</span>
                     </div>
 
                     <h3 className="mt-5 text-sm font-bold text-white">Last Update</h3>
@@ -266,6 +445,7 @@ export default function MapPage() {
                         </div>
                     </div>
                 </div>
+
                 <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} selectedFeature={selectedFeature} />
             </div>
         </>
