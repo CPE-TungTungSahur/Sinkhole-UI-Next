@@ -2,7 +2,7 @@
 
 import { IGeoJSONFeature } from "@/app/(pages)/map/page";
 import { useLoading } from "@/contexts/LoadingContext";
-import { Drawer } from "antd";
+import { Drawer, Spin } from "antd";
 import axios, { AxiosResponse } from "axios";
 import { Loader, LoaderCircle, Wifi, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -157,8 +157,9 @@ export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }:
                 </div>
             ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                    <Wifi className="animate-ping text-white" size={60} />
-                    <div className="text-md mt-8 font-bold text-white">Gathering Data. Please wait...</div>
+                    <Spin size="large" styles={{ indicator: { color: "white", scale: "230%" } }} />
+                    {/* <Wifi className="animate-ping text-white" size={60} /> */}
+                    <div className="text-md mt-14 font-bold text-white">Gathering Data. Please wait...</div>
                 </div>
             )}
         </Drawer>
