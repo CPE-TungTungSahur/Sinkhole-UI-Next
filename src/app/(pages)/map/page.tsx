@@ -3,13 +3,14 @@
 import Image from "next/image";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { config } from "@/config/config";
 import axios, { AxiosResponse } from "axios";
 import PointDetailsDrawer from "@/components/PointDetailsDrawer";
 import { useLoading } from "@/contexts/LoadingContext";
 import { getAllSelfSurwayPoint, getSelfSurwayPoint, setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
 import { createMapAreaCircle } from "@/utils/createMapAreaCircle";
+import { Dropdown, MenuProps, theme } from "antd";
 
 const riskBreakPoint = {
     medium: 0.27,
@@ -70,7 +71,7 @@ export default function MapPage() {
     const [selectedFeature, setSelectedFeature] = useState<IGeoJSONFeature | null>(null);
     const [isOpenDetailsDrawer, setIsOpenDetailsDrawer] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
-    const [clickedCoordinates, setClickedCoordinates] = useState<{ lon: number; lat: number } | null>(null);
+    const [interestCoordinates, setInterestCoordinates] = useState<{ lon: number; lat: number } | null>(null);
     const { startLoading, stopLoading } = useLoading();
     const [reFetchTrigger, setReFetchTrigger] = useState<number>(0);
 
@@ -96,26 +97,39 @@ export default function MapPage() {
             setIsMapLoaded(true);
         });
 
-        // Add right-click/holdscreen event listener to get lat/lon from user click
         map.current.on("contextmenu", (e) => {
-            // right click
             const { lng, lat } = e.lngLat;
-            handleSelfSurway({ lat: lat, lon: lng });
+            setInterestCoordinates({ lon: lng, lat: lat });
+            // handleSelfSurway({ lat: lat, lon: lng });
             console.log("Clicked coordinates:", { lng, lat });
         });
-        let pressTimer: NodeJS.Timeout;
+
         map.current.on("touchstart", (e) => {
-            pressTimer = setTimeout(() => {
-                const { lng, lat } = e.lngLat;
-                console.log("Clicked coordinates:", { lng, lat });
-            }, 1000); // 1.5s
+            const { lng, lat } = e.lngLat;
+            setInterestCoordinates({ lon: lng, lat: lat });
+            console.log("Clicked coordinates:", { lng, lat });
         });
-        map.current.on("touchend", () => {
-            clearTimeout(pressTimer);
-        });
-        map.current.on("touchmove", () => {
-            clearTimeout(pressTimer); // cancle timeout when drag screen
-        });
+
+        // Add right-click/holdscreen event listener to get lat/lon from user click
+        // map.current.on("contextmenu", (e) => {
+        //     // right click
+        //     const { lng, lat } = e.lngLat;
+        //     handleSelfSurway({ lat: lat, lon: lng });
+        //     console.log("Clicked coordinates:", { lng, lat });
+        // });
+        // let pressTimer: NodeJS.Timeout;
+        // map.current.on("touchstart", (e) => {
+        //     pressTimer = setTimeout(() => {
+        //         const { lng, lat } = e.lngLat;
+        //         console.log("Clicked coordinates:", { lng, lat });
+        //     }, 1000); // 1.5s
+        // });
+        // map.current.on("touchend", () => {
+        //     clearTimeout(pressTimer);
+        // });
+        // map.current.on("touchmove", () => {
+        //     clearTimeout(pressTimer); // cancle timeout when drag screen
+        // });
 
         return () => {
             if (map.current) {
@@ -306,7 +320,6 @@ export default function MapPage() {
     }
 
     async function handleSelfSurway({ lat, lon }: { lat: number; lon: number }): Promise<void> {
-        setClickedCoordinates({ lon, lat });
         try {
             startLoading();
             const response: AxiosResponse<ISelfSurwayResponse> = await axios.post(
@@ -326,7 +339,7 @@ export default function MapPage() {
                 lon: response.data.feature.properties.lon,
                 risk: response.data.feature.properties.risk,
             });
-            setReFetchTrigger(Math.random());
+            // setReFetchTrigger(Math.random());
         } catch (error) {
             console.dir("Error fetching surway points:", error);
         } finally {
@@ -334,12 +347,48 @@ export default function MapPage() {
         }
     }
 
+    function lockMap() {
+        map.current?.dragPan.disable();
+        map.current?.scrollZoom.disable();
+    }
+
+    function unlockMap() {
+        map.current?.dragPan.enable();
+        map.current?.scrollZoom.enable();
+    }
+
+    function popMenu(): React.ReactNode {
+        return (
+            <div className="flex w-56 flex-col items-center rounded-lg bg-[#0000]/70 px-4 pb-4 pt-2 backdrop-blur-sm">
+                <div className="text-center font-bold text-white">Predict this location</div>
+                <div className="mt-3 flex flex-row gap-x-3">
+                    <div className="flex flex-col">
+                        <div className="text-sm font-bold text-white">Latitude</div>
+                        <div className="mt-1 text-sm font-bold text-white">Longitude</div>
+                    </div>
+                    <div className="w-fit">
+                        <div className="h-full w-[2px] rounded-lg bg-white"></div>
+                    </div>
+                    <div className="flex flex-col">
+                        <div className="text-wrap text-sm font-bold text-cyan-400">{interestCoordinates?.lat.toFixed(5)}</div>
+                        <div className="mt-1 text-sm font-bold text-cyan-400">{interestCoordinates?.lon.toFixed(5)}</div>
+                    </div>
+                </div>
+                <div className="hover text-md mt-5 w-full cursor-pointer rounded-md bg-cyan-400 py-1 text-center font-bold text-white shadow-[0_0_10px_#06b6d4] duration-300 hover:bg-cyan-300 active:scale-[.98]">
+                    Predict
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
-            <div className="relative w-full bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
-                <div ref={mapContainer} className="absolute inset-0 min-h-screen" />
+            <div className="relative w-full overflow-hidden bg-gradient-to-br from-[#2e344b] via-[#2e344b]/80 to-[#2e344b]">
+                <Dropdown popupRender={popMenu} trigger={["contextMenu"]} className="absolute" onOpenChange={(isOpen, { source }) => (isOpen ? lockMap() : unlockMap())}>
+                    <div ref={mapContainer} className="inset-0 min-h-screen"></div>
+                </Dropdown>
                 {/* Legend */}
-                <div className="bg-card/90 border-border absolute bottom-8 left-8 rounded-lg bg-[#0000]/50 p-4 backdrop-blur-sm md:bottom-[25rem]">
+                <div className="bg-card/90 border-border absolute bottom-8 left-8 z-50 rounded-lg bg-[#0000]/50 p-4 backdrop-blur-sm md:bottom-[25rem]">
                     <h3 className="mb-3 text-sm font-bold text-white">Risk Levels</h3>
                     <div className="flex items-center gap-2">
                         <div className="border-danger h-4 w-4 rounded-full bg-[#ef4443] shadow-[0_0_20px_#ef4443]" />
@@ -370,6 +419,7 @@ export default function MapPage() {
 
                 <PointDetailsDrawer isOpen={isOpenDetailsDrawer} onClose={() => setIsOpenDetailsDrawer(false)} selectedFeature={selectedFeature} />
             </div>
+            {/* </Dropdown> */}
         </>
     );
 }
