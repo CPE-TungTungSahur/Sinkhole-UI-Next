@@ -11,6 +11,7 @@ import { useLoading } from "@/contexts/LoadingContext";
 import { getAllSelfSurwayPoint, getSelfSurwayPoint, setSelfSurwayPoint } from "@/utils/SelfSurwayPointStorage";
 import { createMapAreaCircle } from "@/utils/createMapAreaCircle";
 import { Dropdown, MenuProps, Spin, theme } from "antd";
+import { RiskColor } from "@/enums/RiskColor";
 
 const riskBreakPoint = {
     medium: 0.27,
@@ -58,9 +59,9 @@ export interface ISelfSurwayResponse {
 }
 
 function getRiskColor(prob: number) {
-    if (prob > riskBreakPoint.high) return "#ef4444"; // High
-    if (prob > riskBreakPoint.medium) return "#f97316"; // Medium
-    return "#06b6d4"; // low
+    if (prob > riskBreakPoint.high) return RiskColor.High; // High
+    if (prob > riskBreakPoint.medium) return RiskColor.Medium; // Medium
+    return RiskColor.Low; // low
 }
 
 export default function MapPage() {
