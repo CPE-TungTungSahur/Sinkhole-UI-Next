@@ -12,12 +12,7 @@ import { getAllSelfSurwayPoint, getSelfSurwayPoint, setSelfSurwayPoint } from "@
 import { createMapAreaCircle } from "@/utils/createMapAreaCircle";
 import { Dropdown, MenuProps, Spin, theme } from "antd";
 import { RiskColor } from "@/enums/RiskColor";
-import { getRiskColor } from "@/utils/getRiskColor";
-
-const riskBreakPoint = {
-    medium: 0.27,
-    high: 0.3,
-};
+import { getRiskColor, riskBreakPoint } from "@/utils/getRiskColor";
 
 export interface IGeoJSONFeature {
     type: "Feature";
