@@ -1,159 +1,191 @@
-# Sinkhole UI
-
-A modern web application built with Next.js, React, and Tailwind CSS. This project provides a clean and responsive user interface for the Sinkhole application.
-
-## 📋 Table of Contents
-
-- [About](#about)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
-
-## 🎯 About
-
-Sinkhole UI is a web-based user interface designed to provide an intuitive and efficient experience. Built with modern web technologies, it offers a fast, responsive, and accessible platform for users.
-
-## ✨ Features
-
-- **Modern UI/UX**: Clean and intuitive interface built with React and Tailwind CSS
-- **Server-Side Rendering**: Powered by Next.js for optimal performance
-- **Type Safety**: Written in TypeScript for better code quality and developer experience
-- **Responsive Design**: Works seamlessly across desktop, tablet, and mobile devices
-- **Fast Development**: Hot module replacement for instant feedback during development
-
-## 🛠 Tech Stack
-
-- **Framework**: [Next.js 16](https://nextjs.org/) - React framework for production
-- **UI Library**: [React 19](https://react.dev/) - JavaScript library for building user interfaces
-- **Styling**: [Tailwind CSS 3](https://tailwindcss.com/) - Utility-first CSS framework
-- **Language**: [TypeScript 5](https://www.typescriptlang.org/) - Typed JavaScript
-- **Package Manager**: [pnpm](https://pnpm.io/) - Fast, disk space efficient package manager
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Node.js** (version 18 or higher)
-- **pnpm** (recommended) or npm/yarn
-
-### Installation
-
-1. **Clone the repository**
-
-    ```bash
-    git clone https://github.com/CPE-TungTungSahur/Sinkhole-UI.git
-    cd Sinkhole-UI
-    ```
-
-2. **Install dependencies**
-
-    ```bash
-    pnpm install
-    ```
-
-3. **Run the development server**
-
-    ```bash
-    pnpm dev
-    ```
-
-4. **Open your browser**
-
-    Navigate to [http://localhost:3000](http://localhost:3000) to see the application running.
-
-### Building for Production
-
-To create an optimized production build:
-
-```bash
-pnpm build
-```
-
-To run the production build locally:
-
-```bash
-pnpm start
-```
-
-## 📁 Project Structure
-
-```
-sinkhole-ui/
-├── public/              # Static files (images, fonts, etc.)
-├── src/
-│   ├── app/            # Next.js app directory
-│   │   ├── (pages)/    # Page routes
-│   │   ├── api/        # API routes
-│   │   ├── globals.css # Global styles
-│   │   ├── layout.tsx  # Root layout component
-│   │   └── page.tsx    # Home page
-│   └── components/     # Reusable React components
-├── next.config.ts      # Next.js configuration
-├── tailwind.config.ts  # Tailwind CSS configuration
-├── tsconfig.json       # TypeScript configuration
-└── package.json        # Project dependencies
-```
-
-## 💻 Development
-
-### Available Scripts
-
-- `pnpm dev` - Start development server on port 3000
-- `pnpm build` - Build the application for production
-- `pnpm start` - Start the production server
-
-### Code Style
-
-This project uses TypeScript for type safety. Please ensure your code:
-
-- Follows TypeScript best practices
-- Is properly typed (avoid using `any` when possible)
-- Follows the existing code structure and naming conventions
-
-### Making Changes
-
-1. Create a new branch for your feature or bugfix
-2. Make your changes
-3. Test your changes thoroughly
-4. Submit a pull request with a clear description
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Here's how you can help:
-
-1. **Fork the repository**
-2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
-3. **Commit your changes** (`git commit -m 'Add some amazing feature'`)
-4. **Push to the branch** (`git push origin feature/amazing-feature`)
-5. **Open a Pull Request**
-
-Please make sure to:
-
-- Write clear commit messages
-- Update documentation as needed
-- Test your changes before submitting
-- Follow the existing code style
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Authors
-
-- **CPE-TungTungSahur** - [GitHub Profile](https://github.com/CPE-TungTungSahur)
-
-## 🙏 Acknowledgments
-
-- Built with [Next.js](https://nextjs.org/)
-- Styled with [Tailwind CSS](https://tailwindcss.com/)
-- Developed as part of the EngineerExploration CPE101 project
+<div align="center">
+  <h1>Sinkhole Prediction UI Next</h1>
+  <p><strong>A modern, responsive web application for sinkhole monitoring and analysis</strong></p>
+  
+  [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+  [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+</div>
 
 ---
 
-**Need Help?** Feel free to open an issue if you have questions or encounter any problems!
+## Overview
+
+Sinkhole UI is a cutting-edge web application designed to provide comprehensive visualization and analysis tools for sinkhole monitoring. Built with modern web technologies and best practices, it delivers a fast, responsive, and intuitive user experience across all devices.
+
+## Key Features
+
+- **🎨 Modern Design** - Clean, intuitive interface built with React and Tailwind CSS
+- **⚡ High Performance** - Server-side rendering and optimizations powered by Next.js
+- **🔒 Type Safety** - Full TypeScript implementation for robust, maintainable code
+- **📱 Responsive Layout** - Seamless experience across desktop, tablet, and mobile devices
+- **🗺️ Interactive Mapping** - Dynamic map visualization for sinkhole locations
+- **📊 Data Analytics** - Comprehensive data analysis and prediction features
+- **🔄 Real-time Updates** - Live data synchronization and updates
+
+## Technology Stack
+
+| Category        | Technology                                    | Version |
+| --------------- | --------------------------------------------- | ------- |
+| Framework       | [Next.js](https://nextjs.org/)                | 16.x    |
+| UI Library      | [React](https://react.dev/)                   | 19.x    |
+| Language        | [TypeScript](https://www.typescriptlang.org/) | 5.x     |
+| Styling         | [Tailwind CSS](https://tailwindcss.com/)      | 3.x     |
+| Package Manager | [pnpm](https://pnpm.io/)                      | Latest  |
+
+## Quick Start
+
+### Prerequisites
+
+Ensure your development environment meets the following requirements:
+
+- **Node.js** ≥ 18.0.0
+- **pnpm** (recommended), npm, or yarn
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/CPE-TungTungSahur/Sinkhole-UI-Next.git
+cd Sinkhole-UI-Next
+
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000)
+
+### Production Build
+
+```bash
+# Create optimized production build
+pnpm build
+
+# Start production server
+pnpm start
+```
+
+## Project Structure
+
+```
+sinkhole-ui/
+├── public/                    # Static assets
+├── src/
+│   ├── app/                   # Next.js App Router
+│   │   ├── (pages)/          # Application pages
+│   │   │   ├── map/          # Map visualization
+│   │   │   └── members/      # Team members
+│   │   ├── api/              # API routes
+│   │   │   ├── dev/          # Development endpoints
+│   │   │   └── v1/           # Production API v1
+│   │   ├── globals.css       # Global styles
+│   │   └── layout.tsx        # Root layout
+│   ├── assets/               # Application assets
+│   ├── components/           # Reusable components
+│   │   ├── Footer.tsx
+│   │   ├── LoadingBar.tsx
+│   │   ├── Navbar.tsx
+│   │   └── PointDetailsDrawer.tsx
+│   ├── config/               # Configuration files
+│   ├── contexts/             # React contexts
+│   ├── lib/                  # Utility libraries
+│   └── utils/                # Helper functions
+├── components.json           # Shadcn UI config
+├── docker-compose.yml        # Docker composition
+├── Dockerfile                # Container definition
+├── next.config.ts            # Next.js configuration
+├── tailwind.config.ts        # Tailwind configuration
+└── tsconfig.json             # TypeScript configuration
+```
+
+## Development
+
+### Available Commands
+
+| Command      | Description                              |
+| ------------ | ---------------------------------------- |
+| `pnpm dev`   | Start development server with hot reload |
+| `pnpm build` | Create production build                  |
+| `pnpm start` | Run production server                    |
+| `pnpm lint`  | Run code linter                          |
+
+### Development Guidelines
+
+- **Code Quality**: Follow TypeScript best practices and maintain strict type safety
+- **Naming Conventions**: Use descriptive, consistent naming for components and functions
+- **Component Structure**: Keep components small, focused, and reusable
+- **Styling**: Use Tailwind CSS utility classes; avoid custom CSS when possible
+- **Documentation**: Comment complex logic and maintain updated documentation
+
+### Branch Strategy
+
+1. Create feature branches from `main`
+2. Use descriptive branch names: `feat/`, `fix/`, `docs/`, `refactor/`
+3. Submit pull requests with clear descriptions
+4. Ensure all tests pass before merging
+
+## Contributing
+
+We welcome contributions from the community! To contribute:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feat/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to your branch (`git push origin feat/amazing-feature`)
+5. **Open** a Pull Request
+
+### Contribution Guidelines
+
+- Write clear, descriptive commit messages
+- Follow the existing code style and conventions
+- Add tests for new features
+- Update documentation as needed
+- Ensure your code passes all checks
+
+## Docker Support
+
+Run the application using Docker:
+
+```bash
+# Build and run with Docker Compose
+docker-compose up
+
+# Build Docker image
+docker build -t sinkhole-ui .
+
+# Run container
+docker run -p 3000:3000 sinkhole-ui
+```
+
+## License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+## Team
+
+Developed by **CPE-TungTungSahur** team as part of the CPE101 Engineer Exploration project.
+
+- 🔗 [GitHub Organization](https://github.com/CPE-TungTungSahur)
+- 📧 For inquiries, please open an issue
+
+## Acknowledgments
+
+Special thanks to:
+
+- [Next.js](https://nextjs.org/) team for the amazing framework
+- [Vercel](https://vercel.com/) for hosting and deployment tools
+- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
+- All contributors and supporters of this project
+
+---
+
+<div align="center">
+  <strong>Built with ❤️ by CPE-TungTungSahur</strong>
+  <br>
+  <sub>Need help? Open an <a href="https://github.com/CPE-TungTungSahur/Sinkhole-UI-Next/issues">issue</a></sub>
+</div>

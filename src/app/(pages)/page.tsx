@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChevronUp, Github, Loader, LoaderCircle, Users } from "lucide-react";
 import { useState } from "react";
+import { Spin } from "antd";
 
 export default function HomePage() {
     const [isSliding, setIsSliding] = useState(false);
@@ -31,10 +32,10 @@ export default function HomePage() {
                         />
                         <Users size={50} className="cursor-pointer rounded-xl px-3 py-2 text-white duration-300 hover:bg-white/20 hover:text-cyan-400" onClick={() => router.push("/members")} />
                     </div>
-                    <h1 className="animate__animated animate__fadeIn animate__fast mb-6 cursor-pointer text-5xl font-bold text-white md:text-7xl">
+                    <h1 className="animate__animated animate__fadeIn animate__fast mb-6 cursor-pointer text-center text-5xl font-bold text-white md:text-7xl">
                         Sinkhole <span className="text-cyan-400">Prediction</span>
                     </h1>
-                    <p className="animate__animated animate__fadeIn animate__slow mb-8 text-lg text-gray-300 md:text-xl">
+                    <p className="animate__animated animate__fadeIn animate__slow mb-8 px-5 text-lg text-gray-300 md:text-xl">
                         Advanced AI-powered system to predict and monitor sinkhole risks in real-time
                     </p>
                     <div
@@ -47,8 +48,9 @@ export default function HomePage() {
                 </div>
             </div>
             <div className="flex flex-col items-center text-white">
-                <LoaderCircle size={75} className="animate-spin" />
-                <div className="mt-5 text-lg font-bold">Initializing. Please wait...</div>
+                <Spin size="large" styles={{ indicator: { color: "white", scale: "200%" } }} />
+                {/* <LoaderCircle size={75} className="animate-spin" /> */}
+                <div className="mt-10 text-lg font-bold">Initializing. Please wait...</div>
             </div>
         </div>
     );

@@ -2,12 +2,13 @@
 
 import { IGeoJSONFeature } from "@/app/(pages)/map/page";
 import { useLoading } from "@/contexts/LoadingContext";
-import { Drawer } from "antd";
+import { Drawer, Spin } from "antd";
 import axios, { AxiosResponse } from "axios";
 import { Loader, LoaderCircle, Wifi, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, RadialLinearScale, Filler } from "chart.js";
 import { Line, Radar } from "react-chartjs-2";
+import { getRiskColor } from "@/utils/getRiskColor";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -100,11 +101,39 @@ export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }:
             </div>
             {!isLoading ? (
                 <div className="mt-16 flex h-full w-full flex-col">
-                    {/* <div className="flex flex-row justify-center">
-                        <div className="w-20 clear-start">asdasd</div>
-                    </div> */}
+                    <div className="mx-auto w-fit">
+                        <div className="grid grid-cols-1 justify-between md:grid-cols-2">
+                            <div className="flex flex-col py-3 text-center md:border-r-2 md:pr-10 md:text-end">
+                                <div className="text-2xl font-bold text-white">Risk</div>
+                                <div className="mt-3 text-4xl font-bold" style={{ color: getRiskColor(selectedFeature?.properties.risk!) }}>
+                                    {String(Number(selectedFeature?.properties.risk.toFixed(4)) * 100).slice(0, 5)} <span className="text-lg text-white">%</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col py-3 text-center md:border-l-2 md:pl-10 md:text-start">
+                                <div className="text-2xl font-bold text-white">Coordinates</div>
+                                <div className="mt-3 flex flex-row items-center">
+                                    <div className="flex flex-col">
+                                        <div className="text-sm font-bold text-white">Latitude</div>
+                                        <div className="text-sm font-bold text-white">Longitude</div>
+                                    </div>
+                                    <div className="mx-3 h-4/5 w-[2px] rounded-md bg-white"></div>
+                                    <div className="flex flex-col">
+                                        <div className="text-lg font-bold text-white" style={{ color: getRiskColor(selectedFeature?.properties.risk!) }}>
+                                            {selectedFeature?.geometry.coordinates[1].toFixed(5)}
+                                        </div>
+                                        <div className="text-lg font-bold text-white" style={{ color: getRiskColor(selectedFeature?.properties.risk!) }}>
+                                            {selectedFeature?.geometry.coordinates[0].toFixed(5)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mx-auto my-10 w-72 rounded-md bg-white py-[1px] md:w-2/5"></div>
+
                     <Line
-                        className="mx-auto h-full w-full"
+                        className="mx-auto mt-5 h-full w-full"
                         data={{
                             labels: features.map((f: IFeature) => f.timestamp),
                             datasets:
@@ -154,11 +183,15 @@ export default function PointDetailsDrawer({ isOpen, onClose, selectedFeature }:
                             },
                         }}
                     />
+
+                    {/* just spacer idk why lol */}
+                    <div className="mt-16 py-1"></div>
                 </div>
             ) : (
                 <div className="flex h-full flex-col items-center justify-center">
-                    <Wifi className="animate-ping text-white" size={60} />
-                    <div className="text-md mt-8 font-bold text-white">Gathering Data. Please wait...</div>
+                    <Spin size="large" styles={{ indicator: { color: "white", scale: "230%" } }} />
+                    {/* <Wifi className="animate-ping text-white" size={60} /> */}
+                    <div className="text-md mt-14 font-bold text-white">Gathering Data. Please wait...</div>
                 </div>
             )}
         </Drawer>
