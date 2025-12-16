@@ -4,19 +4,23 @@ import { config } from "@/config/config";
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-
         const { lat, lon, date } = body;
 
         if (lat === undefined || lon === undefined || !date) {
             return NextResponse.json({ error: "lat, lon, date are required" }, { status: 400 });
         }
 
-        // ส่งต่อไป backend FastAPI
-        const res = await fetch(`${config.api.backendUrl}/predict-point?` + new URLSearchParams({ lat: lat, lon: lon, date: date }).toString(), {
-            method: "GET",
+        // 🔁 Forward POST → POST
+        const res = await fetch(`${config.api.backendUrl}/predict-point`, {
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
+            body: JSON.stringify({
+                lat,
+                lon,
+                date,
+            }),
         });
 
         if (!res.ok) {

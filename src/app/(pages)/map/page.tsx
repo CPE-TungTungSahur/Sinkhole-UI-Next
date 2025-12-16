@@ -248,7 +248,7 @@ export default function MapPage() {
             try {
                 startLoading();
                 const response: AxiosResponse<IGeoJSONResponse> = await axios.post(
-                    "/api/dev/predicted-point",
+                    "/api/dev/latest-geojson",
                     {},
                     {
                         headers: { "Content-Type": "application/json" },
